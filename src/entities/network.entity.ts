@@ -12,7 +12,7 @@ import {
   UpdateDateColumn,
   Relation,
 } from 'typeorm';
-import { EventEntity } from './event.entity.js';
+import { EventEntity } from './index.js';
 
 @Entity('networks')
 export class NetworkEntity extends BaseEntity {

@@ -12,7 +12,7 @@ import {
   UpdateDateColumn,
   Relation,
 } from 'typeorm';
-import { EventEntity } from './event.entity.js';
+import { EventEntity } from './index.js';
 
 @Entity('event_messages')
 @Index('idx_event_messages_uniq_msg', ['event_id', 'service_name', 'tx_id'], {
