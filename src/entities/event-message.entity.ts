@@ -1,5 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
-import { EventMessageStatus } from 'src/commons/enums/event_message_status.enum.js';
+import { EventMessageStatus } from '../commons/enums/event_message_status.enum.js';
 import {
   BaseEntity,
   Column,
@@ -10,6 +10,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
 import { EventEntity } from './event.entity.js';
 
@@ -43,7 +44,7 @@ export class EventMessageEntity extends BaseEntity {
     nullable: true,
   })
   @JoinColumn({ name: 'event_id' })
-  event: EventEntity;
+  event: Relation<EventEntity>;
 
   @Index()
   @Column({

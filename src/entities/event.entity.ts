@@ -8,6 +8,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
 import { EventMessageEntity } from './event-message.entity.js';
 
@@ -43,7 +44,7 @@ export class EventEntity extends BaseEntity {
   @OneToMany(() => EventMessageEntity, (message) => message.event, {
     nullable: true,
   })
-  event_messages: EventEntity;
+  event_messages: Relation<EventEntity>[];
 
   @Expose()
   @CreateDateColumn()

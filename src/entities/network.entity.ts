@@ -10,8 +10,9 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { EventEntity } from './event.entity';
+import { EventEntity } from './event.entity.js';
 
 @Entity('networks')
 export class NetworkEntity extends BaseEntity {
@@ -42,7 +43,7 @@ export class NetworkEntity extends BaseEntity {
 
   @OneToMany(() => EventEntity, (event) => event.chain_id, { nullable: true })
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
-  events: EventEntity;
+  events: Relation<EventEntity>[];
 
   @Expose()
   @CreateDateColumn()
