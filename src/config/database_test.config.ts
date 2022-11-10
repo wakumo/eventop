@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
+import {
+  EventEntity,
+  EventMessageEntity,
+  NetworkEntity,
+  ProcessedBlockEntity,
+} from '../entities/index.js';
 
 @Injectable()
 export class DatabaseTestConfigService implements TypeOrmOptionsFactory {
@@ -15,10 +21,13 @@ export class DatabaseTestConfigService implements TypeOrmOptionsFactory {
       database: this.configService.get('db.name_test'),
       password: this.configService.get('db.password'),
       entities: [
-        // insert entities one by one
+        EventEntity,
+        EventMessageEntity,
+        NetworkEntity,
+        ProcessedBlockEntity,
       ],
       synchronize: true,
-      keepConnectionAlive: true
+      keepConnectionAlive: true,
     };
   }
 }

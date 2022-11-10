@@ -11,6 +11,7 @@ import { configuration } from "./config/config.js";
 import { DatabaseConfigService } from "./config/database.config.js";
 import { RedisConfigService } from "./config/redis.config.js";
 import { SCRIPTS } from "./scripts/index.js";
+import { EventsModule } from './apis/events/events.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { SCRIPTS } from "./scripts/index.js";
     //   useClass: BullConfigService,
     //   inject: [ConfigService],
     // }),
-    TerminusModule
+    TerminusModule,
+    EventsModule
   ],
   controllers: [AppController],
   providers: [AppService, ...SCRIPTS],
