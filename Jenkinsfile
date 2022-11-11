@@ -51,11 +51,11 @@ pipeline {
     post {
        // only triggered when blue or green sign
        success {
-           slackSend channel: 'avacuscc-jenkins-notification-dev', message: "[ctn-api] git-commit {${GIT_COMMIT}} has been deployed!!!", color: '#1ddb46'
+           slackSend channel: 'avacuscc-jenkins-notification-dev', message: "[events-mq] git-commit {${GIT_COMMIT}} has been deployed!!!", color: '#1ddb46'
        }
        // triggered when red sign
        failure {
-           slackSend channel: 'avacuscc-jenkins-notification-dev', message: "[ctn-api] something went wrong at git-commit {${GIT_COMMIT}}. please try again!!!", color: '#FE2E2E'
+           slackSend channel: 'avacuscc-jenkins-notification-dev', message: "[events-mq] something went wrong at git-commit {${GIT_COMMIT}}. please try again!!!", color: '#FE2E2E'
        }
        // trigger every-works
        always {
