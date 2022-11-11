@@ -6,8 +6,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { EventsService } from './events.service';
-import { CreateEventDto } from './dto/create-event.dto';
+import { EventsService } from './events.service.js';
+import { CreateEventDto } from './dto/create-event.dto.js';
 import { SerializerInterceptor } from '../../commons/interceptors/index.js';
 
 @UseInterceptors(SerializerInterceptor)
