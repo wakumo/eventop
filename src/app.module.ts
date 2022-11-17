@@ -12,6 +12,8 @@ import { DatabaseConfigService } from './config/database.config.js';
 // import { RedisConfigService } from './config/redis.config.js';
 import { SCRIPTS } from './scripts/index.js';
 import { EventsModule } from './apis/events/events.module.js';
+import { ProcessedBlockModule } from './apis/processed-block/processed-block.module.js';
+import { EventMessageModule } from './apis/event-message/event-message.module.js';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { EventsModule } from './apis/events/events.module.js';
     TerminusModule,
     EventsModule,
     EventsModule,
+    ProcessedBlockModule,
+    EventMessageModule,
   ],
   controllers: [AppController],
   providers: [AppService, ...SCRIPTS],

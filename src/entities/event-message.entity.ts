@@ -15,7 +15,7 @@ import {
 import { EventEntity } from './index.js';
 
 @Entity('event_messages')
-@Index('idx_event_messages_uniq_msg', ['event_id', 'service_name', 'tx_id'], {
+@Index('idx_event_messages_uniq_msg', ['event_id', 'tx_id', 'log_index'], {
   unique: true,
 })
 export class EventMessageEntity extends BaseEntity {
@@ -27,11 +27,11 @@ export class EventMessageEntity extends BaseEntity {
 
   @Index()
   @Column()
-  service_name: string;
+  tx_id: string;
 
   @Index()
   @Column()
-  tx_id: string;
+  log_index: number;
 
   @Index()
   @Column({ type: 'bigint' })
@@ -39,6 +39,10 @@ export class EventMessageEntity extends BaseEntity {
 
   @Column({ type: 'bigint' })
   block_no: number;
+
+  @Index()
+  @Column()
+  contract_address: string;
 
   @ManyToOne(() => EventEntity, (event) => event.event_messages, {
     nullable: true,

@@ -5,8 +5,12 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
+import { NetworkEntity } from './network.entity.js';
 
 @Entity('processed_blocks')
 @Index('idx_processed_blocks_uniq_block', ['chain_id', 'block_no'], {
@@ -23,6 +27,10 @@ export class ProcessedBlockEntity extends BaseEntity {
   @Index()
   @Column()
   chain_id: number;
+
+  @ManyToOne(() => NetworkEntity, (network) => network.chain_id)
+  @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
+  network: Relation<NetworkEntity>;
 
   @Exclude()
   @CreateDateColumn()

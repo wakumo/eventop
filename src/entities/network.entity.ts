@@ -1,7 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
 import {
   BaseEntity,
-  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -21,10 +20,6 @@ export class NetworkEntity extends BaseEntity {
 
   @Index({ unique: true })
   @Column()
-  name: string;
-
-  @Index({ unique: true })
-  @Column({ nullable: true })
   chain_id: number;
 
   @Exclude()
@@ -52,9 +47,4 @@ export class NetworkEntity extends BaseEntity {
   @Exclude()
   @UpdateDateColumn()
   updated_at: Date;
-
-  @BeforeInsert()
-  networkNameToLowerCase() {
-    this.name = this.name?.toLowerCase();
-  }
 }

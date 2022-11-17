@@ -3,6 +3,7 @@ import { getTopicFromEvent } from '../../commons/utils/blockchain.js';
 import { EventEntity } from '../../entities/index.js';
 import { DataSource } from 'typeorm';
 import { CreateEventDto } from './dto/create-event.dto';
+import { ChainTopicsInterface } from 'src/commons/interfaces/chain_topics.interface.js';
 
 @Injectable()
 export class EventsService {
@@ -21,6 +22,45 @@ export class EventsService {
     try {
       event = await queryRunner.manager.save(EventEntity, event);
       return event;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async getTopicsByChainId(chainId: number) {
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+
+    try {
+      const result = await EventEntity.createQueryBuilder('event')
+        .select('ARRAY_AGG(event.event_topic) as topics')
+        .where('event.chain_id = :chainId', { chainId: chainId })
+        .groupBy('event.chain_id')
+        .getRawOne<ChainTopicsInterface>();
+
+      if (!result) {
+        return [];
+      }
+      return result.topics;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async getEventsByChain(chainId: number) {
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+
+    try {
+      const events = await EventEntity.createQueryBuilder('event')
+        .where('event.chain_id = :chainId', { chainId: chainId })
+        .getMany();
+
+      return events;
     } catch (error) {
       console.log(error);
     } finally {
