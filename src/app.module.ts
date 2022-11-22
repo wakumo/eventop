@@ -13,7 +13,8 @@ import { DatabaseConfigService } from './config/database.config.js';
 import { SCRIPTS } from './scripts/index.js';
 import { EventsModule } from './apis/events/events.module.js';
 import { ProcessedBlockModule } from './apis/processed-block/processed-block.module.js';
-import { EventMessageModule } from './apis/event-message/event-message.module.js';
+import { EventMqModule } from "./rabbitmq/eventmq.module.js";
+import { EventMessageModule } from "./apis/event-message/event-message.module.js";
 
 @Module({
   imports: [
@@ -36,11 +37,11 @@ import { EventMessageModule } from './apis/event-message/event-message.module.js
     // }),
     TerminusModule,
     EventsModule,
-    EventsModule,
     ProcessedBlockModule,
     EventMessageModule,
+    EventMqModule
   ],
   controllers: [AppController],
   providers: [AppService, ...SCRIPTS],
 })
-export class AppModule {}
+export class AppModule { }

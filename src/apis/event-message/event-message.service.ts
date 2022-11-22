@@ -4,10 +4,15 @@ import { DataSource, QueryRunner } from 'typeorm';
 import Web3EthAbi from 'web3-eth-abi';
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { EventEntity } from '../../entities/event.entity.js';
+import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
+import { EventMqProducer } from "../../rabbitmq/eventmq.producer.js";
 
 @Injectable()
 export class EventMessageService {
-  constructor(private connection: DataSource) {}
+  constructor(
+    private connection: DataSource,
+    private readonly producer: EventMqProducer
+  ) { }
 
   async findEventMessage(
     eventId: number,
@@ -70,6 +75,41 @@ export class EventMessageService {
       if (!isParentQueryRunner) {
         await queryRunner.release();
       }
+    }
+  }
+
+  async sendPendingMessages(): Promise<void> {
+    const messages = await EventMessageEntity.find({
+      where: { status: EventMessageStatus.PENDING },
+      relations: ["event"]
+    });
+    if (!messages.length) return;
+
+    try {
+      for (const message of messages) {
+        const { service_name: serviceName, event_topic: eventTopic } = message.event;
+        const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
+        const body = {
+          payload: message.payload,
+          serviceName: serviceName,
+          eventName: message.event.name,
+          eventTopic: eventTopic,
+          chainId: message.event.chain_id,
+          txId: message.tx_id,
+          logIndex: message.log_index,
+          blockNo: message.block_no,
+          contractAddress: message.contract_address,
+        }
+        const res = await this.producer.request<boolean>(routingKey, body);
+
+        if (res) {
+          message.status = EventMessageStatus.DELIVERED;
+          await message.save();
+        }
+      }
+    } catch (ex) {
+      console.log("An error happened while trying to send RabbitMQ messages");
+      console.log(ex);
     }
   }
 }

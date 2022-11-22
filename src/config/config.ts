@@ -16,7 +16,10 @@ export const configuration = () => {
     // "redis.port": process.env.REDIS_PORT,
 
     // rabbitmq config
-    // "rabbitmq.host": process.env.RABBITMQ_HOST,
-    // "rabbitmq.port": process.env.RABBITMQ_PORT,
+    "rabbitmq.host": process.env.RABBITMQ_HOST,
+    "rabbitmq.port": process.env.RABBITMQ_PORT,
+    "rabbitmq.user": process.env.RABBITMQ_USER ?? "guest",
+    "rabbitmq.pass": process.env.RABBITMQ_PASS ?? "guest",
+    "rabbitmq.exchange.name": process.env.RABBITMQ_EXCHANGE_NAME
   };
 };

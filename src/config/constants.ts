@@ -10,6 +10,7 @@ export const MINUTES = 60 * SECONDS;
 export const HOURS = 60 * MINUTES;
 export const DAYS = 24 * HOURS;
 export const TOKEN_EXPIRE_TIME = 7 * DAYS;
+export const RABBIT_MQ_TIMEOUT = 60 * SECONDS_TO_MILLISECONDS;
 
 export function DECIMAL(precision: number, scale: number): ColumnOptions {
   return {

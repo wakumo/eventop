@@ -16,7 +16,7 @@ export class EventSeed extends CommandRunner {
           chain_id: chainId,
           name: event.name,
           abi: event.abi,
-          service_name: event.name,
+          service_name: event.service_name,
         });
       }
     }

@@ -1,4 +1,4 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
+import { DataSource, DataSourceOptions, QueryRunner } from 'typeorm';
 // import * as path from 'path';
 import {
   EventEntity,
@@ -10,6 +10,8 @@ import { ConfigModule } from '@nestjs/config';
 import { configuration } from '../src/config/config.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseTestConfigService } from '../src/config/database_test.config.js';
+import { contractEvents } from "../src/scripts/seeds/events/events.js";
+import { getTopicFromEvent } from "../src/commons/utils/blockchain.js";
 
 export async function getSynchronizeConnection() {
   const dataSource = new DataSource({
@@ -48,5 +50,21 @@ export const IMPORT_MODULES = [
   TypeOrmModule.forRootAsync({
     imports: [ConfigModule],
     useClass: DatabaseTestConfigService,
-  }),
+  })
 ];
+
+export async function seedTestEvents(queryRunner: QueryRunner) {
+  for (const event of contractEvents) {
+    for (const chainId of event.chain_ids) {
+      console.log(`Registering event: ${event.name}, chain id: ${chainId}`);
+      const eventTopic = getTopicFromEvent(event.name);
+      await queryRunner.manager.save(EventEntity, {
+        event_topic: eventTopic,
+        chain_id: chainId,
+        name: event.name,
+        abi: event.abi,
+        service_name: event.service_name,
+      });
+    }
+  }
+}
