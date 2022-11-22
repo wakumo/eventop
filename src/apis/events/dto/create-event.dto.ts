@@ -14,5 +14,5 @@ export class CreateEventDto {
   service_name: string;
 
   @IsOptional()
-  contract_address: string;
+  contract_address?: string;
 }
