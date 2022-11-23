@@ -88,7 +88,9 @@ export class EventMessageService {
     try {
       for (const message of messages) {
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
+        console.log(`serviceName: ${serviceName}`);
         const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
+        console.log(`RoutingKey: ${routingKey}`);
         const body = {
           payload: message.payload,
           serviceName: serviceName,
@@ -100,6 +102,7 @@ export class EventMessageService {
           blockNo: message.block_no,
           contractAddress: message.contract_address,
         }
+        console.log(`RoutingKey: ${JSON.stringify(body)}`);
         const res = await this.producer.request<boolean>(routingKey, body);
 
         if (res) {
