@@ -19,7 +19,7 @@ export class RabbitMqConfigService {
         },
       ],
       uri: `amqp://${user}:${pass}@${host}:${port}`,
-      connectionInitOptions: { wait: false },
+      connectionInitOptions: { wait: true },
     }
   }
 }
