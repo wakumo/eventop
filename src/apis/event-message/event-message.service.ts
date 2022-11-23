@@ -102,7 +102,7 @@ export class EventMessageService {
           blockNo: message.block_no,
           contractAddress: message.contract_address,
         }
-        console.log(`RoutingKey: ${JSON.stringify(body)}`);
+        console.log(`Message Body: ${JSON.stringify(body)}`);
         const res = await this.producer.request<boolean>(routingKey, body);
 
         if (res) {
