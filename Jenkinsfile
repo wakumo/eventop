@@ -37,7 +37,7 @@ pipeline {
         // when {branch 'develop'}
         steps{
           script{
-            withKubeConfig(credentialsId: 'wkm_local_credential_deploy', namespace: 'avacuscc', serverUrl: 'https://10.123.31.214:6443') {
+            withKubeConfig(credentialsId: 'wkm_local_credential_deploy', namespace: 'avacuscc', serverUrl: 'https://10.123.31.100:6443') {
               sh 'curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl"'  
               sh 'chmod u+x ./kubectl'  
               
