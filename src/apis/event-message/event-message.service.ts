@@ -5,7 +5,7 @@ import Web3EthAbi from 'web3-eth-abi';
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { EventEntity } from '../../entities/event.entity.js';
 import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
-import { EventMqProducer } from "../../rabbitmq/eventmq.producer.js";
+import { EventMqProducer } from "../../rabbitmq/services/eventmq-producer.service.js";
 
 @Injectable()
 export class EventMessageService {
@@ -92,6 +92,7 @@ export class EventMessageService {
         const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
         console.log(`RoutingKey: ${routingKey}`);
         const body = {
+          id: message.id,
           payload: message.payload,
           serviceName: serviceName,
           eventName: message.event.name,
@@ -103,12 +104,9 @@ export class EventMessageService {
           contractAddress: message.contract_address,
         }
         console.log(`Message Body: ${JSON.stringify(body)}`);
-        const res = await this.producer.request<boolean>(routingKey, body);
-
-        if (res) {
-          message.status = EventMessageStatus.DELIVERED;
-          await message.save();
-        }
+        this.producer.publish(null, routingKey, body);
+        message.status = EventMessageStatus.DELIVERED;
+        await message.save();
       }
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
