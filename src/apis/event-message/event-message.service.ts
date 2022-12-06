@@ -93,7 +93,7 @@ export class EventMessageService {
         console.log(`RoutingKey: ${routingKey}`);
         const body = {
           id: message.id,
-          payload: message.payload,
+          payload: JSON.parse(message.payload),
           serviceName: serviceName,
           eventName: message.event.name,
           eventTopic: eventTopic,

@@ -1,3 +1,5 @@
+jest.setTimeout(60000);
+
 import "./mock-rabbitmq-spec.event-message";
 import "../../../test/utils/mock-eventmq.module";
 
@@ -69,7 +71,7 @@ describe('EventMessageService', () => {
       "avacuscc.events.ctn.0x1d0839dc007189efef00a653ba1960c7ddb01b0b6fbb25c238a8ab5c8e47fc97",
       {
         id: eventMessage.id,
-        payload: '{"message": "test_message"}',
+        payload: { "message": "test_message" },
         serviceName: 'ctn',
         eventName: 'CampaignCreated(bytes32,bytes16,address,address,address,uint8)',
         eventTopic: '0x1d0839dc007189efef00a653ba1960c7ddb01b0b6fbb25c238a8ab5c8e47fc97',
