@@ -17,6 +17,8 @@ RUN yarn install
 # Bundle server source
 COPY . $APP_ROOT
 
+RUN yarn build
+
 EXPOSE 3000 3001
 
 CMD [ "yarn", "run", "migrate_and_start_prod"]
