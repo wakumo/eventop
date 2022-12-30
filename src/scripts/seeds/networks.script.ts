@@ -33,6 +33,14 @@ const networks: Network[] = [
     chain_id: 42161,
     http_url: 'https://arb1.arbitrum.io/rpc',
   },
+  {
+    chain_id: 80001,
+    http_url: 'https://rpc.ankr.com/polygon_mumbai',
+  },
+  {
+    chain_id: 5,
+    http_url: 'https://rpc.ankr.com/eth_goerli',
+  },
 ];
 
 async function createNetwork(queryRunner: QueryRunner, networkBody: Network) {
