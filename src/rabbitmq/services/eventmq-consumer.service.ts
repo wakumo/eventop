@@ -20,7 +20,7 @@ export class EventMqConsumer {
   ) { }
 
   @RabbitSubscribe({
-    exchange: "avacuscc-event-mq-dlx",
+    exchange: `${process.env.RABBITMQ_EXCHANGE_NAME}-dlx`,
     routingKey: "avacuscc.deadletter.events.*.*",
     queue: "event-mq-dlx-worker",
     queueOptions: {
