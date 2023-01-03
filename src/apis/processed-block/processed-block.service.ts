@@ -51,9 +51,6 @@ export class ProcessedBlockService {
       toBlock = toBlock || currentBlock;
       const chunkBlockRanges = chunkArray(fromBlock, toBlock);
       const topics = await this.eventService.getTopicsByChainId(chainId);
-      console.debug(`chainid: ${chainId}`);
-      console.debug('topics: ');
-      console.debug(topics);
 
       if (topics.length !== 0) {
         const registedEvents = await this.eventService.getEventsByChain(
