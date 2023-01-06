@@ -67,6 +67,7 @@ export class ProcessedBlockService {
             topics,
           );
           for (const log of logs) {
+            console.log(log);
             let topic = log.topics[0];
             let events = registedEvents.filter(
               (event) => event.event_topic === topic,
