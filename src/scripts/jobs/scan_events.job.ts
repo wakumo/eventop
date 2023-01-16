@@ -4,6 +4,8 @@ import { ProcessedBlockService } from '../../apis/processed-block/processed-bloc
 
 interface ScanOptions {
   chain_id: number;
+  from_block?: number;
+  to_block?: number;
 }
 
 @Command({
@@ -15,10 +17,21 @@ export class ScanEvents extends CommandRunner {
     super();
   }
 
-  async run(_: string[], { chain_id: chainId }: ScanOptions): Promise<void> {
-    while (true) {
-      await this.blockService.scanBlockEvents(chainId);
-      await sleep(5000);
+  async run(
+    _: string[],
+    {
+      chain_id: chainId,
+      from_block: fromBlock,
+      to_block: toBlock
+    }: ScanOptions
+  ): Promise<void> {
+    if (!!fromBlock === true || !!toBlock === true) {
+      await this.blockService.scanBlockEvents(chainId, fromBlock, toBlock, true);
+    } else {
+      while (true) {
+        await this.blockService.scanBlockEvents(chainId);
+        await sleep(5000);
+      }
     }
   }
 
@@ -27,7 +40,25 @@ export class ScanEvents extends CommandRunner {
     description: 'network chain id',
     required: true,
   })
-  parseReceiver(val: number): number {
+  parseChainId(val: number): number {
+    return Number(val);
+  }
+
+  @Option({
+    flags: '-f, --from_block [number]',
+    description: 'Scan from block',
+    required: false,
+  })
+  parseFromBlock(val: number): number {
+    return Number(val);
+  }
+
+  @Option({
+    flags: '-t, --to_block [number]',
+    description: 'Scan up to block',
+    required: false,
+  })
+  parseToBlock(val: number): number {
     return Number(val);
   }
 }

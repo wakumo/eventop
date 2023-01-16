@@ -32,7 +32,12 @@ export class ProcessedBlockService {
     }
   }
 
-  async scanBlockEvents(chainId: number, fromBlock?: number, toBlock?: number) {
+  async scanBlockEvents(
+    chainId: number,
+    fromBlock?: number,
+    toBlock?: number,
+    ignoreUpdate = false
+  ) {
     const network = await NetworkEntity.findOne({
       where: { chain_id: chainId },
     });
@@ -80,10 +85,12 @@ export class ProcessedBlockService {
               );
             }
           }
-          await ProcessedBlockEntity.create({
-            chain_id: chainId,
-            block_no: blockRange[1],
-          }).save();
+          if (!ignoreUpdate) {
+            await ProcessedBlockEntity.create({
+              chain_id: chainId,
+              block_no: blockRange[1],
+            }).save();
+          }
         }
       }
       console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
