@@ -12,19 +12,18 @@ export class EventsService {
   async registerEvent(createEventDto: CreateEventDto) {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
-
-    const eventTopic = getTopicFromEvent(createEventDto.name);
-    let event: EventEntity;
-    event = await EventEntity.findOne({
-      where: {
-        chain_id: createEventDto.chain_id,
-        event_topic: eventTopic,
-        service_name: createEventDto.service_name,
-      },
-    });
-    if (event) { return; }
-
     try {
+      const eventTopic = getTopicFromEvent(createEventDto.name);
+      let event: EventEntity;
+      event = await EventEntity.findOne({
+        where: {
+          chain_id: createEventDto.chain_id,
+          event_topic: eventTopic,
+          service_name: createEventDto.service_name,
+        },
+      });
+      if (event) { return; }
+
       event = EventEntity.create({
         event_topic: eventTopic,
         ...createEventDto,
