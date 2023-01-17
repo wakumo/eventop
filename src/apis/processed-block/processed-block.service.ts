@@ -62,7 +62,7 @@ export class ProcessedBlockService {
           chainId,
         );
         for (const blockRange of chunkBlockRanges) {
-          console.log(
+          console.info(
             `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`,
           );
           const logs = await this.scanEventByTopics(
@@ -114,6 +114,7 @@ export class ProcessedBlockService {
       toBlock: toBlockHex,
       topics: [topics],
     }
+    console.info(filters);
     const logs = await client.eth.getPastLogs(filters);
     return logs;
   }
