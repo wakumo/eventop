@@ -8,8 +8,8 @@ const fnGetPastLogs = jest.fn();
 when(fnGetBlockNumber).mockReturnValue(24639471);
 when(fnGetPastLogs)
   .calledWith({
-    fromBlock: 24639371,
-    toBlock: 24639470,
+    fromBlock: '0x177f78b',
+    toBlock: '0x177f7ee',
     topics: [
       [
         '0xb1d95b6bdf2983a43c17347eaf5685995f289d9fe589d492d89c1fa6f26f35f1', // CommunityCreated(address,string,address,address)
@@ -21,8 +21,8 @@ when(fnGetPastLogs)
 
 when(fnGetPastLogs)
   .calledWith({
-    fromBlock: 24639471,
-    toBlock: 24639471,
+    fromBlock: '0x177f7ef',
+    toBlock: '0x177f7ef',
     topics: [
       [
         '0xb1d95b6bdf2983a43c17347eaf5685995f289d9fe589d492d89c1fa6f26f35f1', // CommunityCreated(address,string,address,address)

@@ -107,11 +107,14 @@ export class ProcessedBlockService {
     toBlock: number,
     topics: string[],
   ) {
-    const logs = await client.eth.getPastLogs({
-      fromBlock,
-      toBlock,
+    const fromBlockHex = '0x' + fromBlock.toString(16);
+    const toBlockHex = '0x' + toBlock.toString(16);
+    const filters = {
+      fromBlock: fromBlockHex,
+      toBlock: toBlockHex,
       topics: [topics],
-    });
+    }
+    const logs = await client.eth.getPastLogs(filters);
     return logs;
   }
 }
