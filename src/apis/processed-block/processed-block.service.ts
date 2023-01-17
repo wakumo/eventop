@@ -52,8 +52,8 @@ export class ProcessedBlockService {
       const nextBlockNo = await this.getNextScanBlockNoFromDB(chainId);
       const client = initClient(network.http_url);
       const currentBlock = await client.eth.getBlockNumber();
-      fromBlock = fromBlock || nextBlockNo || currentBlock;
-      toBlock = toBlock || currentBlock;
+      fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
+      toBlock = toBlock || Number(currentBlock.toString());
       const chunkBlockRanges = chunkArray(fromBlock, toBlock);
       const topics = await this.eventService.getTopicsByChainId(chainId);
 
@@ -73,7 +73,7 @@ export class ProcessedBlockService {
           );
           for (const log of logs) {
             console.log(log);
-            let topic = log.topics[0];
+            let topic = log['topics'][0];
             let events = registedEvents.filter(
               (event) => event.event_topic === topic,
             );

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { LogData } from '../../commons/interfaces/index.js';
 import { DataSource, QueryRunner } from 'typeorm';
-import Web3EthAbi from 'web3-eth-abi';
+// import Web3EthAbi from 'web3-eth-abi';
+import Web3 from 'web3';
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { EventEntity } from '../../entities/event.entity.js';
 import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
@@ -32,13 +33,13 @@ export class EventMessageService {
 
   async createEventMessage(
     event: EventEntity,
-    log: LogData,
+    log: string | LogData,
     queryRunner?: QueryRunner,
   ) {
     const msg = await this.findEventMessage(
       event.id,
-      log.transactionHash,
-      log.logIndex,
+      log['transactionHash'],
+      log['logIndex'],
     );
     if (msg) {
       return;
@@ -51,19 +52,19 @@ export class EventMessageService {
         await queryRunner.connect();
       }
       await queryRunner.startTransaction();
-
-      const payload = Web3EthAbi.decodeLog(
+      const web3 = new Web3();
+      const payload = web3.eth.abi.decodeLog(
         JSON.parse(event.abi).inputs,
-        log.data,
-        log.topics,
+        log['data'],
+        log['topics'],
       );
       const message = EventMessageEntity.create({
         event_id: event.id,
         payload: JSON.stringify(payload),
-        tx_id: log.transactionHash,
-        log_index: log.logIndex,
-        block_no: log.blockNumber,
-        contract_address: log.address,
+        tx_id: log['transactionHash'],
+        log_index: log['logIndex'],
+        block_no: log['blockNumber'],
+        contract_address: log['address'],
       });
       await queryRunner.manager.save(message);
       await queryRunner.commitTransaction();

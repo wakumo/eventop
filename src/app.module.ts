@@ -1,6 +1,7 @@
 // import { RedisModule } from '@liaoliaots/nestjs-redis';
 // import { BullModule } from '@nestjs/bull';
-import { Module } from '@nestjs/common';
+import './commons/utils/bigint-monkey-patching.js';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -44,4 +45,5 @@ import { EventMessageModule } from "./apis/event-message/event-message.module.js
   controllers: [AppController],
   providers: [AppService, ...SCRIPTS],
 })
-export class AppModule { }
+export class AppModule  {
+}
