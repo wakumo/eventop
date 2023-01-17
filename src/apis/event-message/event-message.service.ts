@@ -69,9 +69,8 @@ export class EventMessageService {
       await queryRunner.manager.save(message);
       await queryRunner.commitTransaction();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       await queryRunner.rollbackTransaction();
-      throw error;
     } finally {
       if (!isParentQueryRunner) {
         await queryRunner.release();
