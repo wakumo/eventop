@@ -122,23 +122,15 @@ export class EventMessageService {
     try {
       await queryRunner.startTransaction();
 
-      // Delete all transfer event messsages
+      // Delete all delivered event messsages
       // which are delivered to RabbitMq
       const deliveredMessages = await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
-        .select('event_messages.id')
-        .innerJoin('event_messages.event', 'event')
-        .where('event.event_topic = :eventTopic', { eventTopic: TRANSFERED_EVENT_TOPIC })
-        .andWhere('event_messages.status = :status', { status: EventMessageStatus.DELIVERED })
-        .getMany();
-      const deliveredMessagesIds = deliveredMessages.map((msg) => msg.id);
-
-      if (deliveredMessagesIds.length > 0) {
-        await queryRunner.manager.delete(EventMessageEntity, { id: In(deliveredMessagesIds) });
-      }
-
+        .where('event_messages.status = :status', { status: EventMessageStatus.DELIVERED })
+        .delete()
+        .execute();
       await queryRunner.commitTransaction();
 
-      console.info(`Deleted all delivered messages: ${deliveredMessagesIds.length}`);
+      console.info(`Deleted all delivered messages: ${deliveredMessages.affected}`);
     } catch (error) {
       console.error(error);
       await queryRunner.rollbackTransaction();
