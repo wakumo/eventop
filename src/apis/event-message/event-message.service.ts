@@ -1,7 +1,7 @@
+import { TRANSFERED_EVENT_TOPIC } from '../../config/constants.js';
 import { Injectable } from '@nestjs/common';
 import { LogData } from '../../commons/interfaces/index.js';
-import { DataSource, QueryRunner } from 'typeorm';
-// import Web3EthAbi from 'web3-eth-abi';
+import { DataSource, In, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { EventEntity } from '../../entities/event.entity.js';
@@ -111,6 +111,39 @@ export class EventMessageService {
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
       console.log(ex);
+    }
+  }
+
+  async deleteDeliveredMessage(): Promise<void> {
+    let queryRunner: QueryRunner;
+    queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+
+    try {
+      await queryRunner.startTransaction();
+
+      // Delete all transfer event messsages
+      // which are delivered to RabbitMq
+      const deliveredMessages = await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
+        .select('event_messages.id')
+        .innerJoin('event_messages.event', 'event')
+        .where('event.event_topic = :eventTopic', { eventTopic: TRANSFERED_EVENT_TOPIC })
+        .andWhere('event_messages.status = :status', { status: EventMessageStatus.DELIVERED })
+        .getMany();
+      const deliveredMessagesIds = deliveredMessages.map((msg) => msg.id);
+
+      if (deliveredMessagesIds.length > 0) {
+        await queryRunner.manager.delete(EventMessageEntity, { id: In(deliveredMessagesIds) });
+      }
+
+      await queryRunner.commitTransaction();
+
+      console.info(`Deleted all delivered messages: ${deliveredMessagesIds.length}`);
+    } catch (error) {
+      console.error(error);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
   }
 }
