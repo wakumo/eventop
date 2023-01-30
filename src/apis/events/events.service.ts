@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getTopicFromEvent } from '../../commons/utils/blockchain.js';
+import { getABIInputsHash, getTopicFromEvent } from '../../commons/utils/blockchain.js';
 import { EventEntity } from '../../entities/index.js';
 import { DataSource } from 'typeorm';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -22,10 +22,25 @@ export class EventsService {
           service_name: createEventDto.service_name,
         },
       });
-      if (event) { return; }
+
+      // Two Transfered events can have same function signature (event_topic)
+      // But ABI can be different due to indexes factor
+      // therefore we need allow register two events same signature but different abi
+      // inputsHash is used to detected abi structure is same or not
+      const inputsHash = getABIInputsHash(createEventDto.abi);
+
+      if (event) {
+        // update inputs_hash if not exists
+        if (!event.abi_inputs_hash) {
+          event.abi_inputs_hash = inputsHash;
+          await queryRunner.manager.save(EventEntity, event);
+        }
+        return;
+      }
 
       event = EventEntity.create({
         event_topic: eventTopic,
+        abi_inputs_hash: inputsHash,
         ...createEventDto,
       });
       event = await queryRunner.manager.save(EventEntity, event);
