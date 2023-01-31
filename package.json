@@ -40,10 +40,6 @@
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^3.3.0",
     "@liaoliaots/nestjs-redis": "^9.0.3",
-    "@moralisweb3/core": "^2.6.5",
-    "@moralisweb3/evm": "^2.0.0-alpha.2",
-    "@moralisweb3/evm-api": "^2.6.5",
-    "@moralisweb3/evm-wallet-connect-connector": "^2.0.0-alpha.2",
     "@nestjs/bull": "^0.6.1",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.2.0",
@@ -70,7 +66,7 @@
     "rxjs": "^7.2.0",
     "ts-jest-resolver": "^2.0.0",
     "typeorm": "^0.3.10",
-    "web3": "^1.8.0"
+    "web3": "v4.0.1-alpha.5"
   },
   "devDependencies": {
     "@babel/core": "^7.4.0-0",

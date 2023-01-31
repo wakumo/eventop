@@ -32,7 +32,12 @@ export class ProcessedBlockService {
     }
   }
 
-  async scanBlockEvents(chainId: number, fromBlock?: number, toBlock?: number) {
+  async scanBlockEvents(
+    chainId: number,
+    fromBlock?: number,
+    toBlock?: number,
+    ignoreUpdate = false
+  ) {
     const network = await NetworkEntity.findOne({
       where: { chain_id: chainId },
     });
@@ -47,8 +52,8 @@ export class ProcessedBlockService {
       const nextBlockNo = await this.getNextScanBlockNoFromDB(chainId);
       const client = initClient(network.http_url);
       const currentBlock = await client.eth.getBlockNumber();
-      fromBlock = fromBlock || nextBlockNo || currentBlock;
-      toBlock = toBlock || currentBlock;
+      fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
+      toBlock = toBlock || Number(currentBlock.toString());
       const chunkBlockRanges = chunkArray(fromBlock, toBlock);
       const topics = await this.eventService.getTopicsByChainId(chainId);
 
@@ -57,7 +62,7 @@ export class ProcessedBlockService {
           chainId,
         );
         for (const blockRange of chunkBlockRanges) {
-          console.log(
+          console.info(
             `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`,
           );
           const logs = await this.scanEventByTopics(
@@ -68,7 +73,7 @@ export class ProcessedBlockService {
           );
           for (const log of logs) {
             console.log(log);
-            let topic = log.topics[0];
+            let topic = log['topics'][0];
             let events = registedEvents.filter(
               (event) => event.event_topic === topic,
             );
@@ -80,10 +85,12 @@ export class ProcessedBlockService {
               );
             }
           }
-          await ProcessedBlockEntity.create({
-            chain_id: chainId,
-            block_no: blockRange[1],
-          }).save();
+          if (!ignoreUpdate) {
+            await ProcessedBlockEntity.create({
+              chain_id: chainId,
+              block_no: blockRange[1],
+            }).save();
+          }
         }
       }
       console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
@@ -100,11 +107,15 @@ export class ProcessedBlockService {
     toBlock: number,
     topics: string[],
   ) {
-    const logs = await client.eth.getPastLogs({
-      fromBlock,
-      toBlock,
+    const fromBlockHex = '0x' + fromBlock.toString(16);
+    const toBlockHex = '0x' + toBlock.toString(16);
+    const filters = {
+      fromBlock: fromBlockHex,
+      toBlock: toBlockHex,
       topics: [topics],
-    });
+    }
+    console.info(filters);
+    const logs = await client.eth.getPastLogs(filters);
     return logs;
   }
 }

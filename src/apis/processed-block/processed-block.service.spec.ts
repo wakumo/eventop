@@ -1,6 +1,7 @@
 import './mock-web3-spec.processed-block.js';
 import './mock-rabbitmq-spec.event-message';
 import '../../../test/utils/mock-eventmq.module';
+import '../../commons/utils/bigint-monkey-patching.js';
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';

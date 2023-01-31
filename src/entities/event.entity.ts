@@ -13,15 +13,16 @@ import {
 import { EventMessageEntity } from './index.js';
 
 @Entity('events')
-@Index('idx_events_uniq_event', ['chain_id', 'event_topic', 'service_name'], {
+@Index('idx_events_uniq_event', ['chain_id', 'event_topic', 'service_name', 'abi_inputs_hash'], {
   unique: true,
 })
 export class EventEntity extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id: number;
 
-  @Column({ nullable: true })
-  contract_address: string;
+  @Index()
+  @Column({ type: 'varchar', array: true, length: 42, default: [] })
+  contract_addresses: string[];
 
   @Index()
   @Column({ nullable: true })
@@ -40,6 +41,9 @@ export class EventEntity extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   abi: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  abi_inputs_hash: string;
 
   @OneToMany(() => EventMessageEntity, (message) => message.event, {
     nullable: true,

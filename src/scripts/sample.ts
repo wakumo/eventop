@@ -1,47 +1,55 @@
 import Web3 from 'web3';
-import {
-  airdropCreatedPayload,
-  communityCreatedPayload,
-} from '../../test/fixtures/index.js';
-import Web3EthAbi from 'web3-eth-abi';
-import { LogData } from '../commons/interfaces/index.js';
-import { EventEntity } from '../entities/index.js';
-import { getSynchronizeConnection } from '../../test/utils.js';
-import { initializeConnection } from '../../connection.js';
 
 async function main() {
-  await initializeConnection();
-  await EventEntity.create({ ...communityCreatedPayload }).save();
-  await EventEntity.create({ ...airdropCreatedPayload }).save();
+  const log = {
+    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+    topics: [
+      '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+      '0x0000000000000000000000009b08288c3be4f62bbf8d1c20ac9c5e6f9467d8b7',
+      '0x0000000000000000000000007445de16041026093421a1dc70a19f8a71b22226'
+    ],
+    data: '0x000000000000000000000000000000000000000000000000000000004f60e768',
+    blockNumber: 38147130,
+    transactionHash: '0x545e88a896dd3190436ecb13e85e082a9bf98345863cd68835c03a61cba406f1',
+    transactionIndex: 0,
+    blockHash: '0xb90685d01cf70c02b9071a69927a292eb2394f68762a3bee4cecf64e260497f9',
+    logIndex: 0,
+    removed: false,
+    id: 'log_b4dc3ba4'
+  };
 
-  const events = await EventEntity.find();
-  console.log(events);
-  // console.log(airdropCreatedPayload);
-  // var web3 = new Web3(
-  //   new Web3.providers.HttpProvider(
-  //     'https://data-seed-prebsc-2-s1.binance.org:8545/',
-  //   ),
-  // );
-  // // console.log(web3)
-  // const events = await web3.eth.getPastLogs({
-  //   fromBlock: 24489554,
-  //   toBlock: 24489557,
-  //   topics: [
-  //     [
-  //       // '0x627059660ea01c4733a328effb2294d2f86905bf806da763a89cee254de8bee5',
-  //       // airdropCreatedPayload.event_topic,
-  //     ],
-  //   ],
-  // });
-  // console.log(events);
-  // let event: LogData = events[0];
-  // console.log(event.constructor.name)
-  // let decodedData = Web3EthAbi.decodeLog(
-  //   JSON.parse(airdropCreatedPayload.abi).inputs,
-  //   event.data,
-  //   event.topics,
-  // );
-  // console.log(decodedData)
+  const eventABI = {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "Transfer",
+    "type": "event"
+  };
+  const web3 = new Web3();
+  const payload = web3.eth.abi.decodeLog(
+       eventABI.inputs,
+       log.data,
+       log.topics,
+  );
+  console.log(payload);
 }
 main().catch((error) => {
   console.log(error);
