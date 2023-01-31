@@ -28,5 +28,11 @@ export const contractEvents = [
     "name": "FeeClaimed(bytes32,address,address,uint256)",
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "bytes32", "name": "campaignId", "type": "bytes32" }, { "indexed": false, "internalType": "address", "name": "tokenFee", "type": "address" }, { "indexed": false, "internalType": "address", "name": "claimer", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "FeeClaimed", "type": "event" }',
     "chain_ids": [97, 80001, 5, 137]
+  },
+  {
+    "service_name": "balance",
+    "name": "Transfer(address,address,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}], "name": "Transfer", "type": "event"}',
+    "chain_ids": [1, 137, 56]
   }
 ]
