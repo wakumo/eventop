@@ -79,17 +79,23 @@ export class EventMessageService {
   }
 
   async sendPendingMessages(): Promise<void> {
-    const messages = await EventMessageEntity.find({
+    const pendingMessages = await EventMessageEntity.find({
       where: { status: EventMessageStatus.PENDING },
       relations: ["event"], skip: 0, take: 1000,
       order: {
         created_at: "ASC"
       }
     });
-    if (!messages.length) return;
+
+    if (!pendingMessages.length) return;
+
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+
+    let messages = [];
 
     try {
-      for (const message of messages) {
+      for (const message of pendingMessages) {
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
         console.log(`serviceName: ${serviceName}`);
         const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
@@ -109,11 +115,14 @@ export class EventMessageService {
         console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
         message.status = EventMessageStatus.DELIVERED;
-        await message.save();
+        messages.push(message);
       }
+      await queryRunner.manager.save(messages);
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
       console.log(ex);
+    } finally {
+      await queryRunner.release();
     }
   }
 
