@@ -4,7 +4,7 @@ export const communityEvent = 'CommunityCreated(address,string,address,address)'
 export const eventPayload = {
   name: communityEvent,
   event_topic: getTopicFromEvent(communityEvent),
-  abi: '{}',
+  abi: '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "bytes32", "name": "campaignId", "type": "bytes32" }, { "indexed": false, "internalType": "bytes16", "name": "salt", "type": "bytes16" }, { "indexed": false, "internalType": "address", "name": "creator", "type": "address" }, { "indexed": false, "internalType": "address", "name": "campaign", "type": "address" }, { "indexed": false, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "enum CampaignCTNStorage.TOKEN_TYPE", "name": "tokenType", "type": "uint8" } ], "name": "CampaignCreated", "type": "event" }',
   service_name: 'sns',
   chain_id: 97,
 };

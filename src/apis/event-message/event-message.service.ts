@@ -81,7 +81,10 @@ export class EventMessageService {
   async sendPendingMessages(): Promise<void> {
     const messages = await EventMessageEntity.find({
       where: { status: EventMessageStatus.PENDING },
-      relations: ["event"]
+      relations: ["event"], skip: 0, take: 1000,
+      order: {
+        created_at: "ASC"
+      }
     });
     if (!messages.length) return;
 

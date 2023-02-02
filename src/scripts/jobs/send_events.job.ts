@@ -14,7 +14,7 @@ export class SendEventsJob extends CommandRunner {
   async run(): Promise<void> {
     while (true) {
       await this.eventMessageService.sendPendingMessages();
-      await sleep(5 * SECONDS_TO_MILLISECONDS);
+      await sleep(1 * SECONDS_TO_MILLISECONDS);
     }
   }
 }
