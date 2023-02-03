@@ -46,9 +46,6 @@ pipeline {
 
               sh './kubectl delete -f .kube/development/events-mq-job.yml'
               sh './kubectl apply -f .kube/development/events-mq-job.yml'
-              
-              sh './kubectl delete -f .kube/development/events-mq-delete-delivered-messages-cronjob.yml'
-              sh './kubectl apply -f .kube/development/events-mq-delete-delivered-messages-cronjob.yml'
             }
           }
         }
