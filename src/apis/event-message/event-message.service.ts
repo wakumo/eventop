@@ -1,9 +1,8 @@
-import { TRANSFERED_EVENT_TOPIC } from '../../config/constants.js';
+import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { Injectable } from '@nestjs/common';
 import { LogData } from '../../commons/interfaces/index.js';
 import { DataSource, In, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
-import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { EventEntity } from '../../entities/event.entity.js';
 import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
 import { EventMqProducer } from "../../rabbitmq/services/eventmq-producer.service.js";
@@ -79,17 +78,23 @@ export class EventMessageService {
   }
 
   async sendPendingMessages(): Promise<void> {
-    const messages = await EventMessageEntity.find({
+    const pendingMessages = await EventMessageEntity.find({
       where: { status: EventMessageStatus.PENDING },
       relations: ["event"], skip: 0, take: 1000,
       order: {
         created_at: "ASC"
       }
     });
-    if (!messages.length) return;
+
+    if (!pendingMessages.length) return;
+
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+
+    let messages = [];
 
     try {
-      for (const message of messages) {
+      for (const message of pendingMessages) {
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
         const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
 
@@ -109,12 +114,14 @@ export class EventMessageService {
         }
         // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
-        message.status = EventMessageStatus.DELIVERED;
-        await message.save();
       }
+      await queryRunner.manager.delete(EventMessageEntity, pendingMessages);
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
       console.log(ex);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
   }
 

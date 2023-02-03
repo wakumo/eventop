@@ -83,7 +83,7 @@ describe('EventMessageService', () => {
       },
       undefined
     );
-    // and then event status to be changed to delivered
-    expect(eventMsgAfterSend.status).toBe(EventMessageStatus.DELIVERED);
+    // Delete after sent
+    expect(eventMsgAfterSend).toBe(null);
   })
 });
