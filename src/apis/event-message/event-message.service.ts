@@ -1,5 +1,4 @@
-import { EventMessageEntity } from './../../entities/event-message.entity';
-import { TRANSFERED_EVENT_TOPIC } from '../../config/constants.js';
+import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { Injectable } from '@nestjs/common';
 import { LogData } from '../../commons/interfaces/index.js';
 import { DataSource, In, QueryRunner } from 'typeorm';
