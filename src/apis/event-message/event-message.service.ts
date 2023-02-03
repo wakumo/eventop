@@ -96,9 +96,10 @@ export class EventMessageService {
     try {
       for (const message of pendingMessages) {
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
-        console.log(`serviceName: ${serviceName}`);
         const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
-        console.log(`RoutingKey: ${routingKey}`);
+
+        console.log(`serviceName: ${serviceName}, routingKey: ${routingKey}`);
+
         const body = {
           id: message.id,
           payload: JSON.parse(message.payload),
@@ -111,7 +112,7 @@ export class EventMessageService {
           blockNo: message.block_no,
           contractAddress: message.contract_address,
         }
-        console.log(`Message Body: ${JSON.stringify(body)}`);
+        // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
       }
       await queryRunner.manager.delete(EventMessageEntity, pendingMessages);
