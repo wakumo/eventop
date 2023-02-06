@@ -33,7 +33,6 @@ export class EventMessageService {
   async createEventMessage(
     event: EventEntity,
     log: string | LogData,
-    queryRunner: QueryRunner,
   ) {
     const msg = await this.findEventMessage(
       event.id,
@@ -41,7 +40,7 @@ export class EventMessageService {
       log['logIndex'],
     );
     // Return if msg is existed
-    if (msg) { return; }
+    if (msg) { return null; }
 
     const web3 = new Web3();
     let payload = {};
@@ -55,11 +54,11 @@ export class EventMessageService {
       );
     } catch (error) {
       console.log(error);
-      return;
+      return null;
     }
 
     try {
-      const message = EventMessageEntity.create({
+      return EventMessageEntity.create({
         event_id: event.id,
         payload: JSON.stringify(payload),
         tx_id: log['transactionHash'],
@@ -67,7 +66,6 @@ export class EventMessageService {
         block_no: log['blockNumber'],
         contract_address: log['address'],
       });
-      await queryRunner.manager.save(message);
     } catch (error) {
       throw error;
     }

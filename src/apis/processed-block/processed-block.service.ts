@@ -1,3 +1,4 @@
+import { EventMessageEntity } from './../../entities/event-message.entity';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import Web3 from 'web3';
@@ -54,7 +55,7 @@ export class ProcessedBlockService {
     const currentBlock = await client.eth.getBlockNumber();
     fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
     toBlock = toBlock || Number(currentBlock.toString());
-    const chunkBlockRanges = chunkArray(fromBlock, toBlock);
+    const chunkBlockRanges = chunkArray(fromBlock, toBlock, 100);
 
     const topics = await this.eventService.getTopicsByChainId(chainId);
     if (topics.length === 0) { return };
@@ -77,18 +78,26 @@ export class ProcessedBlockService {
             blockRange[1],
             topics,
           );
+          let eventMessages = [];
           for (const log of logs) {
             let topic = log['topics'][0];
             let events = registedEvents.filter(
               (event) => event.event_topic === topic,
             );
-            for (const event of events) {
-              await this.eventMsgService.createEventMessage(
+            const messagePayloadPromises = events.map((event) => {
+              return this.eventMsgService.createEventMessage(
                 event,
                 log,
-                queryRunner,
               );
-            }
+            });
+            const messagePayloads = await Promise.all(messagePayloadPromises);
+            const validMessagePayloads = messagePayloads.filter(msg => {
+              return msg !== null;
+            });
+            eventMessages.push(...validMessagePayloads);
+          }
+          if (eventMessages.length !== 0) {
+            await queryRunner.manager.save(eventMessages);
           }
           if (!ignoreUpdate) {
             await queryRunner.manager.create(ProcessedBlockEntity, {
