@@ -101,8 +101,8 @@ export class ProcessedBlockService {
 
           console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
         } catch (error) {
-          console.log(error);
           await queryRunner.rollbackTransaction();
+          throw error;
         }
       }
     } finally {
