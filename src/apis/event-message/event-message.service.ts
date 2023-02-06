@@ -33,30 +33,32 @@ export class EventMessageService {
   async createEventMessage(
     event: EventEntity,
     log: string | LogData,
-    queryRunner?: QueryRunner,
+    queryRunner: QueryRunner,
   ) {
     const msg = await this.findEventMessage(
       event.id,
       log['transactionHash'],
       log['logIndex'],
     );
-    if (msg) {
-      return;
-    }
-    let isParentQueryRunner = true;
+    // Return if msg is existed
+    if (msg) { return; }
+
+    const web3 = new Web3();
+    let payload = {};
+
+    // Return and not raise error if got decodeLog error
     try {
-      if (!queryRunner) {
-        isParentQueryRunner = false;
-        queryRunner = this.connection.createQueryRunner();
-        await queryRunner.connect();
-      }
-      await queryRunner.startTransaction();
-      const web3 = new Web3();
-      const payload = web3.eth.abi.decodeLog(
+      payload = web3.eth.abi.decodeLog(
         JSON.parse(event.abi).inputs,
         log['data'],
         log['topics'],
       );
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+
+    try {
       const message = EventMessageEntity.create({
         event_id: event.id,
         payload: JSON.stringify(payload),
@@ -66,14 +68,8 @@ export class EventMessageService {
         contract_address: log['address'],
       });
       await queryRunner.manager.save(message);
-      await queryRunner.commitTransaction();
     } catch (error) {
-      console.error(error);
-      await queryRunner.rollbackTransaction();
-    } finally {
-      if (!isParentQueryRunner) {
-        await queryRunner.release();
-      }
+      throw error;
     }
   }
 

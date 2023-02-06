@@ -10,6 +10,7 @@ import { EventsService } from '../events/events.service.js';
 
 @Injectable()
 export class ProcessedBlockService {
+
   constructor(
     private connection: DataSource,
     @Inject(forwardRef(() => EventsService))
@@ -48,23 +49,28 @@ export class ProcessedBlockService {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
-    try {
-      const nextBlockNo = await this.getNextScanBlockNoFromDB(chainId);
-      const client = initClient(network.http_url);
-      const currentBlock = await client.eth.getBlockNumber();
-      fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
-      toBlock = toBlock || Number(currentBlock.toString());
-      const chunkBlockRanges = chunkArray(fromBlock, toBlock);
-      const topics = await this.eventService.getTopicsByChainId(chainId);
+    const nextBlockNo = await this.getNextScanBlockNoFromDB(chainId);
+    const client = initClient(network.http_url);
+    const currentBlock = await client.eth.getBlockNumber();
+    fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
+    toBlock = toBlock || Number(currentBlock.toString());
+    const chunkBlockRanges = chunkArray(fromBlock, toBlock);
 
-      if (topics.length !== 0) {
-        const registedEvents = await this.eventService.getEventsByChain(
-          chainId,
-        );
-        for (const blockRange of chunkBlockRanges) {
+    const topics = await this.eventService.getTopicsByChainId(chainId);
+    if (topics.length === 0) { return };
+
+    const registedEvents = await this.eventService.getEventsByChain(chainId);
+
+    try {
+      for (const blockRange of chunkBlockRanges) {
+        // Put each blockRange in a single transaction
+        // Any error except decodeLog error will make this step rollback
+        try {
           console.info(
             `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`,
           );
+          // Start transaction
+          await queryRunner.startTransaction();
           const logs = await this.scanEventByTopics(
             client,
             blockRange[0],
@@ -72,7 +78,6 @@ export class ProcessedBlockService {
             topics,
           );
           for (const log of logs) {
-            console.log(log);
             let topic = log['topics'][0];
             let events = registedEvents.filter(
               (event) => event.event_topic === topic,
@@ -86,16 +91,20 @@ export class ProcessedBlockService {
             }
           }
           if (!ignoreUpdate) {
-            await ProcessedBlockEntity.create({
+            await queryRunner.manager.create(ProcessedBlockEntity, {
               chain_id: chainId,
               block_no: blockRange[1],
             }).save();
           }
+          await queryRunner.commitTransaction();
+          // End and commit transction
+
+          console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
+        } catch (error) {
+          console.log(error);
+          await queryRunner.rollbackTransaction();
         }
       }
-      console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
-    } catch (error) {
-      console.log(error);
     } finally {
       await queryRunner.release();
     }
