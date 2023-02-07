@@ -55,8 +55,7 @@ export class ProcessedBlockService {
     const currentBlock = await client.eth.getBlockNumber();
     fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
     toBlock = toBlock || Number(currentBlock.toString());
-    const chunkBlockRanges = chunkArray(fromBlock, toBlock, 100);
-
+    const chunkBlockRanges = chunkArray(fromBlock, toBlock, 50);
     const topics = await this.eventService.getTopicsByChainId(chainId);
     if (topics.length === 0) { return };
 

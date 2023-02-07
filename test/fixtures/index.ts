@@ -97,7 +97,7 @@ export const communityCreatedPayload = {
   chain_id: 97,
 };
 
-export const pastLogs24639471 = [
+export const pastLogs24639371_24639420 = [
   {
     address: '0xE8bc3596533c3Fc908B43e1F1dE33Cc116AaEd13',
     topics: [
@@ -111,7 +111,10 @@ export const pastLogs24639471 = [
     logIndex: 20,
     removed: false,
     id: 'log_38ff7fdb'
-  },
+  }
+]
+
+export const pastLogs24639421_24639470 = [
   {
     address: '0x27168006F4978A545b80445da92c23892AF2218c',
     topics: [
