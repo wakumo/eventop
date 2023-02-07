@@ -36,6 +36,9 @@ export class NetworkEntity extends BaseEntity {
   @Column({ nullable: true })
   address_link: string;
 
+  @Column({ default: false })
+  is_stop_scan: boolean;
+
   @OneToMany(() => EventEntity, (event) => event.chain_id, { nullable: true })
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
   events: Relation<EventEntity>[];

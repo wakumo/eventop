@@ -46,6 +46,10 @@ export class ProcessedBlockService {
     if (!network) {
       throw `Invalid network: ${chainId}`;
     }
+    if (network.is_stop_scan === true) {
+      console.info(`Pause the scan on the ${network.chain_id} network`);
+      return;
+    }
 
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
