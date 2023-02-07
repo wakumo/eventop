@@ -34,13 +34,13 @@ export class EventMessageService {
     event: EventEntity,
     log: string | LogData,
   ) {
-    const msg = await this.findEventMessage(
-      event.id,
-      log['transactionHash'],
-      log['logIndex'],
-    );
-    // Return if msg is existed
-    if (msg) { return null; }
+    // const msg = await this.findEventMessage(
+    //   event.id,
+    //   log['transactionHash'],
+    //   log['logIndex'],
+    // );
+    // // Return if msg is existed
+    // if (msg) { return null; }
 
     const web3 = new Web3();
     let payload = {};
