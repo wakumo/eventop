@@ -96,7 +96,7 @@ export class ProcessedBlockService {
             eventMessages.push(...validMessagePayloads);
           }
           if (eventMessages.length !== 0) {
-            await queryRunner.manager.save(eventMessages);
+            await queryRunner.manager.save(eventMessages, { chunk: 100 });
           }
           if (!ignoreUpdate) {
             await queryRunner.manager.create(ProcessedBlockEntity, {
