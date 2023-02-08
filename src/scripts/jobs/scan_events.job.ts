@@ -1,6 +1,7 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { sleep } from '../../commons/utils/index.js';
 import { ProcessedBlockService } from '../../apis/processed-block/processed-block.service.js';
+import { SECONDS_TO_MILLISECONDS } from "../../config/constants.js";
 
 interface ScanOptions {
   chain_id: number;
@@ -30,7 +31,7 @@ export class ScanEvents extends CommandRunner {
     } else {
       while (true) {
         await this.blockService.scanBlockEvents(chainId);
-        await sleep(5000);
+        await sleep(3 * SECONDS_TO_MILLISECONDS);
       }
     }
   }
