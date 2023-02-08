@@ -30,7 +30,7 @@ export class EventMessageService {
     return message;
   }
 
-  async createEventMessage(
+  createEventMessage(
     event: EventEntity,
     log: string | LogData,
   ) {
