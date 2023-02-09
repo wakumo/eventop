@@ -39,6 +39,9 @@ export class NetworkEntity extends BaseEntity {
   @Column({ default: false })
   is_stop_scan: boolean;
 
+  @Column({ default: 50, type: 'smallint' })
+  scan_range_no: number;
+
   @OneToMany(() => EventEntity, (event) => event.chain_id, { nullable: true })
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
   events: Relation<EventEntity>[];
