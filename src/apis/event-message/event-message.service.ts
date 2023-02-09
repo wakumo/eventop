@@ -30,11 +30,18 @@ export class EventMessageService {
     return message;
   }
 
-  async createEventMessage(
+  createEventMessage(
     event: EventEntity,
     log: string | LogData,
-    queryRunner: QueryRunner
   ) {
+    // const msg = await this.findEventMessage(
+    //   event.id,
+    //   log['transactionHash'],
+    //   log['logIndex'],
+    // );
+    // // Return if msg is existed
+    // if (msg) { return null; }
+
     const web3 = new Web3();
     let payload = {};
 
@@ -51,14 +58,14 @@ export class EventMessageService {
     }
 
     try {
-      await queryRunner.manager.create(EventMessageEntity, {
+      return EventMessageEntity.create({
         event_id: event.id,
         payload: JSON.stringify(payload),
         tx_id: log['transactionHash'],
         log_index: log['logIndex'],
         block_no: log['blockNumber'],
         contract_address: log['address'],
-      }).save();
+      });
     } catch (error) {
       throw error;
     }
@@ -99,6 +106,7 @@ export class EventMessageService {
           blockNo: message.block_no,
           contractAddress: message.contract_address,
         }
+        // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
       }
       await queryRunner.manager.delete(EventMessageEntity, pendingMessages);
