@@ -80,24 +80,19 @@ export class ProcessedBlockService {
             blockRange[1],
             topics,
           );
-          let eventMessages = [];
           for (const log of logs) {
             const topic = log['topics'][0];
             const events = registedEvents.filter(
               (event) => event.event_topic === topic,
             );
-            events.map((event) => {
-              const newMessage = this.eventMsgService.createEventMessage(
+            for (let index = 0; index < events.length; index++) {
+              const event = events[index];
+              await this.eventMsgService.createEventMessage(
                 event,
                 log,
+                queryRunner
               );
-              if (newMessage !== null) {
-                eventMessages.push(newMessage);
-              }
-            });
-          }
-          if (eventMessages.length !== 0) {
-            await queryRunner.manager.save(eventMessages, { chunk: 200 });
+            }
           }
           if (!ignoreUpdate) {
             await queryRunner.manager.create(ProcessedBlockEntity, {
