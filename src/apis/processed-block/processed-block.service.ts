@@ -20,12 +20,12 @@ export class ProcessedBlockService {
   ) {}
 
   async getNextScanBlockNoFromDB(chainId: number) {
-    const lastScannedBlock = await ProcessedBlockEntity.createQueryBuilder(
-      'processed_block',
-    )
-      .where('processed_block.chain_id = :chainId', { chainId: chainId })
-      .orderBy('processed_block.block_no', 'DESC')
-      .getOne();
+    const lastScannedBlock = await ProcessedBlockEntity.findOne({
+      where: {
+        chain_id: chainId
+      },
+      order: { block_no: 'DESC' }
+    });
     if (lastScannedBlock) {
       return lastScannedBlock.block_no + 1;
     } else {
