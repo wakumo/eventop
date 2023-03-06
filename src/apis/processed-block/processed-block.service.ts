@@ -19,18 +19,13 @@ export class ProcessedBlockService {
     private eventMsgService: EventMessageService,
   ) {}
 
-  async getNextScanBlockNoFromDB(chainId: number) {
-    const lastScannedBlock = await ProcessedBlockEntity.findOne({
+  async latestProccessedBlockBy(chainId: number) {
+    return await ProcessedBlockEntity.findOne({
       where: {
         chain_id: chainId
       },
       order: { block_no: 'DESC' }
     });
-    if (lastScannedBlock) {
-      return lastScannedBlock.block_no + 1;
-    } else {
-      return null;
-    }
   }
 
   async scanBlockEvents(
@@ -53,7 +48,13 @@ export class ProcessedBlockService {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
-    const nextBlockNo = await this.getNextScanBlockNoFromDB(chainId);
+    let nextBlockNo = null;
+
+    const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
+    if (latestProcessBlock) {
+      nextBlockNo = latestProcessBlock.block_no + 1;
+    }
+
     const client = initClient(network.http_url);
     const currentBlock = await client.eth.getBlockNumber();
     fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
@@ -100,10 +101,18 @@ export class ProcessedBlockService {
             await queryRunner.manager.save(eventMessages, { chunk: 200 });
           }
           if (!ignoreUpdate) {
-            await queryRunner.manager.create(ProcessedBlockEntity, {
-              chain_id: chainId,
-              block_no: blockRange[1],
-            }).save();
+            if (latestProcessBlock) {
+              await queryRunner.manager.update(
+                ProcessedBlockEntity,
+                latestProcessBlock.id,
+                { block_no: blockRange[1] }
+              );
+            } else {
+              await queryRunner.manager.create(ProcessedBlockEntity, {
+                chain_id: chainId,
+                block_no: blockRange[1],
+              }).save();
+            }
           }
           await queryRunner.commitTransaction();
           // End and commit transction

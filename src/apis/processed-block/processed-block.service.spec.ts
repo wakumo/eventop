@@ -66,6 +66,7 @@ describe('ProcessedBlockService', () => {
     .where('processed_block.chain_id = :chainId', { chainId: 97 })
     .orderBy('processed_block.block_no', 'DESC')
     .getOne();
+
     expect(messages.length).toEqual(2);
     expect(processedBlock.block_no).toEqual(24639471);
   });
