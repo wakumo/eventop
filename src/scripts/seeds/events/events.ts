@@ -13,8 +13,8 @@ export const contractEvents = [
   },
   {
     "service_name": "ctn",
-    "name": "CampaignClaimed(bytes32,address)",
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "bytes32", "name": "campaignId", "type": "bytes32" }, { "indexed": false, "internalType": "address", "name": "claimer", "type": "address" } ], "name": "CampaignClaimed", "type": "event" }',
+    "name": "CampaignClaimed(bytes32,address,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "bytes32", "name": "campaignId", "type": "bytes32" }, { "indexed": false, "internalType": "address", "name": "claimer", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "tokenId", "type": "uint256" } ], "name": "CampaignClaimed", "type": "event" }',
     "chain_ids": [97, 80001, 5, 137]
   },
   {
