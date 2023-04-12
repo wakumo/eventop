@@ -31,7 +31,7 @@ export const contractEvents = [
   },
   {
     "service_name": "balance",
-    "name": "Transfer(address,address,uint256)",
+    "name": "Transfer(address,address,uint256)", // ERC20 transfer
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}], "name": "Transfer", "type": "event"}',
     "chain_ids": [1, 137, 56]
   },
@@ -45,6 +45,18 @@ export const contractEvents = [
     "service_name": "sns",
     "name": "UnFollowed(address,address)",
     "abi": '{ "anonymous": false, "inputs": [ {"indexed": false, "internalType": "address", "name": "actor", "type": "address" }, { "indexed": false, "internalType": "address", "name": "user", "type": "address" } ], "name": "UnFollowed", "type":"event" }',
+    "chain_ids": [1, 137, 56, 97, 80001]
+  },
+  {
+    "service_name": "sns",
+    "name": "Transfer(address,address,uint256)", // ERC721 transfer
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256"}], "name": "Transfer", "type": "event"}',
+    "chain_ids": [1, 137, 56, 97, 80001]
+  },
+  {
+    "service_name": "sns",
+    "name": "TransferSingle(address,address,address,uint256,uint256)", // ERC1155 transfer
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "operator", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "id", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "TransferSingle", "type": "event" }',
     "chain_ids": [1, 137, 56, 97, 80001]
   }
 ]
