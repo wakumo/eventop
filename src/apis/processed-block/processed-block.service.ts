@@ -60,6 +60,11 @@ export class ProcessedBlockService {
     console.log('currentBlockNo', currentBlockNo);
     const currentBlock = await client.eth.getBlock(currentBlockNo, false);
 
+    if (!currentBlock) {
+      console.error(`Can't fetch current block on the ${network.chain_id} network`);
+      return;
+    }
+
     // Validate orphan block or not to rescan last chunk blocks
     // Check if (latestProcessBlock.block_no + 1).parentHash === latestProcessBlock.block_hash
     // True is valid, False is orphan block
