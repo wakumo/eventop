@@ -72,6 +72,10 @@ export class ProcessedBlockService {
     // Only check if latestProcessBlock is not null and its block_hash is not null
     if (latestProcessBlock && latestProcessBlock.block_hash && latestProcessBlock.block_no < currentBlockNo) {
       const nextStartBlock = await client.eth.getBlock(latestProcessBlock.block_no + 1, false);
+      if (!nextStartBlock) {
+        console.error(`Can't fetch nextStartBlock on the ${network.chain_id} network`);
+        return;
+      }
       if (nextStartBlock.parentHash?.toLowerCase() !== latestProcessBlock.block_hash?.toLowerCase()) {
         fromBlock = latestProcessBlock.block_no - network.scan_range_no; // rescan last chunk blocks if orphan block
       }
