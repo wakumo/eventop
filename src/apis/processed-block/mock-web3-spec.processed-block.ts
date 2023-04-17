@@ -1,9 +1,14 @@
 import Web3 from 'web3';
 import { when } from 'jest-when';
-import { pastLogs24639371_24639420, pastLogs24639421_24639470 } from '../../../test/fixtures/index.js';
+import {
+  pastLogs24639371_24639420,
+  pastLogs24639421_24639470,
+  block_24639471_97,
+} from '../../../test/fixtures/index.js';
 
 const fnGetBlockNumber = jest.fn();
 const fnGetPastLogs = jest.fn();
+const fnGetBlock = jest.fn();
 
 when(fnGetBlockNumber).mockReturnValue(24639471);
 when(fnGetPastLogs)
@@ -45,12 +50,17 @@ when(fnGetPastLogs)
   })
   .mockReturnValue([]);
 
+when(fnGetBlock)
+  .calledWith(24639471, false)
+  .mockReturnValue(block_24639471_97);
+
 jest.spyOn(Web3.providers, 'HttpProvider').mockImplementation(() => null);
 jest.mock('web3-eth', () => {
   return jest.fn().mockImplementation(() => {
     return {
       getPastLogs: fnGetPastLogs,
       getBlockNumber: fnGetBlockNumber,
+      getBlock: fnGetBlock,
     };
   });
 });

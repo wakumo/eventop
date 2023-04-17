@@ -28,6 +28,9 @@ export class ProcessedBlockEntity extends BaseEntity {
   @Column()
   chain_id: number;
 
+  @Column({ nullable: true })
+  block_hash: string;
+
   @ManyToOne(() => NetworkEntity, (network) => network.chain_id)
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
   network: Relation<NetworkEntity>;

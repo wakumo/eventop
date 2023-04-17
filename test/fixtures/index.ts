@@ -97,6 +97,8 @@ export const communityCreatedPayload = {
   chain_id: 97,
 };
 
+export const block_24639471_97 = {}
+
 export const pastLogs24639371_24639420 = [
   {
     address: '0xE8bc3596533c3Fc908B43e1F1dE33Cc116AaEd13',

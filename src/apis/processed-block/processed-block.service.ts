@@ -56,9 +56,24 @@ export class ProcessedBlockService {
     }
 
     const client = initClient(network.http_url);
-    const currentBlock = await client.eth.getBlockNumber();
-    fromBlock = fromBlock || nextBlockNo || Number(currentBlock.toString());
-    toBlock = toBlock || Number(currentBlock.toString());
+    const currentBlockNo = await client.eth.getBlockNumber();
+    console.log('currentBlockNo', currentBlockNo);
+    const currentBlock = await client.eth.getBlock(currentBlockNo, false);
+
+    // Validate orphan block or not to rescan last chunk blocks
+    // Check if (latestProcessBlock.block_no + 1).parentHash === latestProcessBlock.block_hash
+    // True is valid, False is orphan block
+    //
+    // Only check if latestProcessBlock is not null and its block_hash is not null
+    if (latestProcessBlock && latestProcessBlock.block_hash && latestProcessBlock.block_no < currentBlockNo) {
+      const nextStartBlock = await client.eth.getBlock(latestProcessBlock.block_no + 1, false);
+      if (nextStartBlock.parentHash?.toLowerCase() !== latestProcessBlock.block_hash?.toLowerCase()) {
+        fromBlock = latestProcessBlock.block_no - network.scan_range_no; // rescan last chunk blocks if orphan block
+      }
+    }
+
+    fromBlock = fromBlock || nextBlockNo || Number(currentBlockNo.toString());
+    toBlock = toBlock || Number(currentBlockNo.toString());
     const chunkBlockRanges = chunkArray(fromBlock, toBlock, network.scan_range_no);
     const topics = await this.eventService.getTopicsByChainId(chainId);
     if (topics.length === 0) { return };
@@ -105,12 +120,16 @@ export class ProcessedBlockService {
               await queryRunner.manager.update(
                 ProcessedBlockEntity,
                 latestProcessBlock.id,
-                { block_no: blockRange[1] }
+                {
+                  block_no: blockRange[1],
+                  block_hash: currentBlock.hash?.toLowerCase(),
+                }
               );
             } else {
               await queryRunner.manager.create(ProcessedBlockEntity, {
                 chain_id: chainId,
                 block_no: blockRange[1],
+                block_hash: currentBlock.hash?.toLowerCase(),
               }).save();
             }
           }
