@@ -45,9 +45,6 @@ export class ProcessedBlockService {
       return;
     }
 
-    const queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
-
     let nextBlockNo = null;
 
     const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
@@ -88,6 +85,9 @@ export class ProcessedBlockService {
     if (topics.length === 0) { return };
 
     const registedEvents = await this.eventService.getEventsByChain(chainId);
+
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
 
     try {
       for (const blockRange of chunkBlockRanges) {
