@@ -20,6 +20,7 @@ export class EventEntity extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id: number;
 
+  // Only receive event from these contract addresses
   @Index()
   @Column({ type: 'varchar', array: true, length: 42, default: [] })
   contract_addresses: string[];

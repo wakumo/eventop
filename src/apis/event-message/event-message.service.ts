@@ -14,35 +14,27 @@ export class EventMessageService {
     private readonly producer: EventMqProducer
   ) { }
 
-  async findEventMessage(
-    eventId: number,
-    transactionId: string,
-    logIndex: number,
-  ) {
-    const message = await EventMessageEntity.createQueryBuilder(
-      'event_messages',
-    )
-      .where('event_messages.event_id = :eventId', { eventId: eventId })
-      .andWhere('event_messages.tx_id = :txId', { txId: transactionId })
-      .andWhere('event_messages.log_index = :logIndex', { logIndex: logIndex })
-      .getOne();
+  // async findEventMessage(
+  //   eventId: number,
+  //   transactionId: string,
+  //   logIndex: number,
+  // ) {
+  //   const message = await EventMessageEntity.createQueryBuilder(
+  //     'event_messages',
+  //   )
+  //     .where('event_messages.event_id = :eventId', { eventId: eventId })
+  //     .andWhere('event_messages.tx_id = :txId', { txId: transactionId })
+  //     .andWhere('event_messages.log_index = :logIndex', { logIndex: logIndex })
+  //     .getOne();
 
-    return message;
-  }
+  //   return message;
+  // }
 
   createEventMessage(
     event: EventEntity,
     log: string | LogData,
   ) {
-    // const msg = await this.findEventMessage(
-    //   event.id,
-    //   log['transactionHash'],
-    //   log['logIndex'],
-    // );
-    // // Return if msg is existed
-    // if (msg) { return null; }
-
-    const web3 = new Web3();
+    const web3 = new Web3(); // decodeLog no need http provider
     let payload = {};
 
     // Return and not raise error if got decodeLog error
@@ -85,10 +77,18 @@ export class EventMessageService {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
-    let messages = [];
-
     try {
       for (const message of pendingMessages) {
+
+        // Next if message.event have contract_addresses settings
+        // and message.contract_address not in contract_addresses
+        if (
+          message.event.contract_addresses.length > 0 &&
+          !message.event.contract_addresses.includes(message.contract_address.toLowerCase())
+        ) {
+          continue;
+        }
+
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
         const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
 
