@@ -58,5 +58,43 @@ export const contractEvents = [
     "name": "TransferSingle(address,address,address,uint256,uint256)", // ERC1155 transfer
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "operator", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "id", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "TransferSingle", "type": "event" }',
     "chain_ids": [1, 137, 56, 97, 80001]
-  }
+  },
+  {
+    "service_name": "sowaka_governance",
+    "name": "Transfer(address,address,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}], "name": "Transfer", "type": "event"}',
+    "chain_ids": [80001],
+    "contract_addresses": [
+      "0xeC84c83b8911233fA287d204690dA34F54369456", // SWK mumbai
+      "0x55340d3a1Ebf71dD9A84012c7DFf60dF0F392Fb8" // veSWK mumbai
+    ],
+  },
+  {
+    "service_name": "sowaka_governance",
+    // event SWKStaked(address user, uint256 swkAmount, uint256 veSWKAmount, uint256 stakingPeriod, uint256 stakedAt, uint256 index);
+    "name": "SWKStaked(address,uint256,uint256,uint256,uint256,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "swkAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" } ], "name": "SWKStaked", "type": "event" }',
+    "chain_ids": [80001],
+  },
+  {
+    "service_name": "sowaka_governance",
+    // event SWKUnstaked(address user, uint256 veSWKAmount, uint256 unstakedAt);
+    "name": "SWKUnstaked(address,uint256,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "unstakedAt", "type": "uint256" } ], "name": "SWKUnstaked", "type": "event" }',
+    "chain_ids": [80001],
+  },
+  {
+    "service_name": "sowaka_governance",
+    // event SWKClaimedMiningReward(address user, uint256 totalReward);
+    "name": "SWKClaimedMiningReward(address,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "totalReward", "type": "uint256" } ], "name": "SWKClaimedMiningReward", "type": "event" }',
+    "chain_ids": [80001],
+  },
+  {
+    "service_name": "sowaka_governance",
+    // event VeSWKAdminDistributed(address user, uint256 amount);
+    "name": "VeSWKAdminDistributed(address,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
+    "chain_ids": [80001],
+  },
 ]

@@ -12,11 +12,20 @@ export class EventSeed extends CommandRunner {
     for (const event of contractEvents) {
       for (const chainId of event.chain_ids) {
         console.log(`Registering event: ${event.name}, chain id: ${chainId}`);
+
+        let contractAddresses = [];
+        if (event.contract_addresses) {
+          contractAddresses = event.contract_addresses.map(contract => {
+            return contract.toLowerCase();
+          });
+        }
+
         await this.eventService.registerEvent({
           chain_id: chainId,
           name: event.name,
           abi: event.abi,
           service_name: event.service_name,
+          contract_addresses: contractAddresses,
         });
       }
     }
