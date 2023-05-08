@@ -71,9 +71,9 @@ export const contractEvents = [
   },
   {
     "service_name": "sowaka_governance",
-    // event SWKStaked(address user, uint256 swkAmount, uint256 veSWKAmount, uint256 stakingPeriod, uint256 stakedAt, uint256 index);
-    "name": "SWKStaked(address,uint256,uint256,uint256,uint256,uint256)",
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "swkAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" } ], "name": "SWKStaked", "type": "event" }',
+    // event SWKStaked(address user, uint256 swkAmount, uint256 veSWKAmount, uint256 stakingPeriod, uint256 stakedAt, uint256 index, uint256 apy);
+    "name": "SWKStaked(address,uint256,uint256,uint256,uint256,uint256,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "swkAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "apy", "type": "uint256" } ], "name": "SWKStaked", "type": "event" }',
     "chain_ids": [80001],
   },
   {
@@ -85,16 +85,16 @@ export const contractEvents = [
   },
   {
     "service_name": "sowaka_governance",
-    // event SWKClaimedMiningReward(address user, uint256 totalReward);
-    "name": "SWKClaimedMiningReward(address,uint256)",
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "totalReward", "type": "uint256" } ], "name": "SWKClaimedMiningReward", "type": "event" }',
+    // event SWKClaimedMiningReward(address user, uint256 totalReward, uint256 claimedAt);
+    "name": "SWKClaimedMiningReward(address,uint256,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "totalReward", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "claimedAt", "type": "uint256" } ], "name": "SWKClaimedMiningReward", "type": "event" }',
     "chain_ids": [80001],
   },
   {
     "service_name": "sowaka_governance",
-    // event VeSWKAdminDistributed(address user, uint256 amount);
-    "name": "VeSWKAdminDistributed(address,uint256)",
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
+    // event VeSWKAdminDistributed(address user, uint256 amount, uint256 distributedAt);
+    "name": "VeSWKAdminDistributed(address,uint256,uint256)",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "distributedAt", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
     "chain_ids": [80001],
   },
 ]
