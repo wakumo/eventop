@@ -53,9 +53,6 @@ export class EventsService {
   }
 
   async getTopicsByChainId(chainId: number) {
-    const queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
-
     try {
       const result = await EventEntity.createQueryBuilder('event')
         .select('ARRAY_AGG(event.event_topic) as topics')
@@ -69,15 +66,10 @@ export class EventsService {
       return result.topics;
     } catch (error) {
       console.log(error);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async getEventsByChain(chainId: number) {
-    const queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
-
     try {
       const events = await EventEntity.createQueryBuilder('event')
         .where('event.chain_id = :chainId', { chainId: chainId })
@@ -86,8 +78,6 @@ export class EventsService {
       return events;
     } catch (error) {
       console.log(error);
-    } finally {
-      await queryRunner.release();
     }
   }
 }
