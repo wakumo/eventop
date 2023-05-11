@@ -34,7 +34,9 @@ export class EventMessageService {
     event: EventEntity,
     log: string | LogData,
   ) {
-    const web3 = new Web3(); // decodeLog no need http provider
+    // Any https provider is fine. Just put to avoid raise warning
+    // Decode no need to connect to blockchain
+    const web3 = new Web3(new Web3.providers.HttpProvider('https://rpc.ankr.com/eth'));
     let payload = {};
 
     // Return and not raise error if got decodeLog error
