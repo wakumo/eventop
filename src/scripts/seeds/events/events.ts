@@ -78,9 +78,9 @@ export const contractEvents = [
   },
   {
     "service_name": "sowaka_governance",
-    // event SWKUnstaked(address user, uint256 veSWKAmount, uint256 unstakedAt);
+    // event SWKUnstaked(address user, uint256 veSWKAmount, uint256 unstakedAt, uint256 index);
     "name": "SWKUnstaked(address,uint256,uint256)",
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "unstakedAt", "type": "uint256" } ], "name": "SWKUnstaked", "type": "event" }',
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "unstakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" } ], "name": "SWKUnstaked", "type": "event" }',
     "chain_ids": [80001],
   },
   {
