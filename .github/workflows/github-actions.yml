@@ -1,0 +1,61 @@
+name: NestJS Service CI
+
+on:
+  push:
+    branches: [release, develop]
+  pull_request:
+    branches: [release, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.16.0]
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: runner
+          POSTGRES_DB: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --mount type=tmpfs,destination=/var/lib/postgresql/data
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: --entrypoint redis-server
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: runner
+      DB_NAME: avacuscc-events
+      DB_NAME_TEST: avacuscc-events-test
+
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+
+      RABBITMQ_HOST: 127.0.0.1
+      RABBITMQ_PORT: 5672
+      RABBITMQ_EXCHANGE_NAME: avacuscc-event-mq
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn install
+      - run: yarn ts-node-esm create_db.ts
+      - run: yarn db:migrate:up
+      - run: yarn test
