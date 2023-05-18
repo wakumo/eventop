@@ -89,71 +89,69 @@ export class ProcessedBlockService {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
-    try {
-      for (const blockRange of chunkBlockRanges) {
-        // Put each blockRange in a single transaction
-        // Any error except decodeLog error will make this step rollback
-        try {
-          console.info(
-            `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`,
+    for (const blockRange of chunkBlockRanges) {
+      // Put each blockRange in a single transaction
+      // Any error except decodeLog error will make this step rollback
+      await queryRunner.startTransaction();
+      try {
+        console.info(
+          `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`,
+        );
+        const logs = await this.scanEventByTopics(
+          client,
+          blockRange[0],
+          blockRange[1],
+          topics,
+        );
+        let eventMessages = [];
+        for (const log of logs) {
+          const topic = log['topics'][0];
+          const events = registedEvents.filter(
+            (event) => event.event_topic === topic,
           );
-          // Start transaction
-          await queryRunner.startTransaction();
-          const logs = await this.scanEventByTopics(
-            client,
-            blockRange[0],
-            blockRange[1],
-            topics,
-          );
-          let eventMessages = [];
-          for (const log of logs) {
-            const topic = log['topics'][0];
-            const events = registedEvents.filter(
-              (event) => event.event_topic === topic,
+          events.map((event) => {
+            const newMessage = this.eventMsgService.createEventMessage(
+              event,
+              log,
             );
-            events.map((event) => {
-              const newMessage = this.eventMsgService.createEventMessage(
-                event,
-                log,
-              );
-              if (newMessage !== null) {
-                eventMessages.push(newMessage);
-              }
-            });
-          }
-          if (eventMessages.length !== 0) {
-            await queryRunner.manager.save(eventMessages, { chunk: 200 });
-          }
-          if (!ignoreUpdate) {
-            if (latestProcessBlock) {
-              await queryRunner.manager.update(
-                ProcessedBlockEntity,
-                latestProcessBlock.id,
-                {
-                  block_no: blockRange[1],
-                  block_hash: currentBlock.hash?.toLowerCase(),
-                }
-              );
-            } else {
-              await queryRunner.manager.create(ProcessedBlockEntity, {
-                chain_id: chainId,
+            if (newMessage !== null) {
+              eventMessages.push(newMessage);
+            }
+          });
+        }
+        if (eventMessages.length !== 0) {
+          await queryRunner.manager.save(eventMessages, { chunk: 200 });
+        }
+        if (!ignoreUpdate) {
+          if (latestProcessBlock) {
+            await queryRunner.manager.update(
+              ProcessedBlockEntity,
+              latestProcessBlock.id,
+              {
                 block_no: blockRange[1],
                 block_hash: currentBlock.hash?.toLowerCase(),
-              }).save();
-            }
+              }
+            );
+          } else {
+            await queryRunner.manager.create(ProcessedBlockEntity, {
+              chain_id: chainId,
+              block_no: blockRange[1],
+              block_hash: currentBlock.hash?.toLowerCase(),
+            }).save();
           }
-          await queryRunner.commitTransaction();
-          // End and commit transction
-
-          console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
-        } catch (error) {
-          await queryRunner.rollbackTransaction();
-          throw error;
         }
+        await queryRunner.commitTransaction();
+        // End and commit transction
+
+        console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        console.log(error);
+        break;
       }
-    } finally {
-      await queryRunner.release();
     }
+
+    await queryRunner.release();
   }
 
   async scanEventByTopics(
