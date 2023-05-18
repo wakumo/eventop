@@ -103,12 +103,14 @@ export class ProcessedBlockService {
           blockRange[1],
           topics,
         );
+        console.info('Get logs done');
         let eventMessages = [];
         for (const log of logs) {
           const topic = log['topics'][0];
           const events = registedEvents.filter(
             (event) => event.event_topic === topic,
           );
+          console.info('Filter event done');
           events.map((event) => {
             const newMessage = this.eventMsgService.createEventMessage(
               event,
@@ -118,6 +120,7 @@ export class ProcessedBlockService {
               eventMessages.push(newMessage);
             }
           });
+          console.info('Create event message done');
         }
         if (eventMessages.length !== 0) {
           await queryRunner.manager.save(eventMessages, { chunk: 200 });
@@ -133,11 +136,13 @@ export class ProcessedBlockService {
               }
             );
           } else {
+            console.info('Starting create proccessed block');
             await queryRunner.manager.create(ProcessedBlockEntity, {
               chain_id: chainId,
               block_no: blockRange[1],
               block_hash: currentBlock.hash?.toLowerCase(),
             }).save();
+            console.info('Done create proccessed_block');
           }
         }
         await queryRunner.commitTransaction();
