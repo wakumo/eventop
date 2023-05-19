@@ -108,7 +108,7 @@ export class ProcessedBlockService {
         for (const log of logs) {
           const topic = log['topics'][0];
           const events = registedEvents.filter(
-            (event) => event.event_topic === topic,
+            (event) => event.event_topic === topic && event.chain_id === chainId,
           );
           console.info('Filter event done');
           events.map((event) => {
