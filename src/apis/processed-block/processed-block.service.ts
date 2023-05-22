@@ -4,7 +4,10 @@ import Web3 from 'web3';
 
 import { initClient } from '../../commons/utils/blockchain.js';
 import { chunkArray } from '../../commons/utils/index.js';
-import { NetworkEntity, ProcessedBlockEntity } from '../../entities/index.js';
+import {
+  NetworkEntity,
+  ProcessedBlockEntity
+} from '../../entities/index.js';
 import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 
@@ -165,11 +168,9 @@ export class ProcessedBlockService {
     toBlock: number,
     topics: string[],
   ) {
-    const fromBlockHex = '0x' + fromBlock.toString(16);
-    const toBlockHex = '0x' + toBlock.toString(16);
     const filters = {
-      fromBlock: fromBlockHex,
-      toBlock: toBlockHex,
+      fromBlock: fromBlock,
+      toBlock: toBlock,
       topics: [topics],
     }
     console.info(filters);
