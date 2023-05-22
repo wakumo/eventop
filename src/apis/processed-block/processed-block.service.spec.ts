@@ -56,18 +56,17 @@ describe('ProcessedBlockService', () => {
     expect(service).toBeDefined();
   });
 
-  // it('should be scan CommunityCreated and AirdropCreated events', async () => {
-  //   await service.scanBlockEvents(97);
-  //   await service.scanBlockEvents(97); // recheck
-  //   const messages = await EventMessageEntity.find();
-  //   const processedBlock = await ProcessedBlockEntity.createQueryBuilder(
-  //     'processed_block',
-  //   )
-  //   .where('processed_block.chain_id = :chainId', { chainId: 97 })
-  //   .orderBy('processed_block.block_no', 'DESC')
-  //   .getOne();
+  it('should be scan CommunityCreated and AirdropCreated events', async () => {
+    await service.scanBlockEvents(97);
+    const messages = await EventMessageEntity.find();
+    const processedBlock = await ProcessedBlockEntity.createQueryBuilder(
+      'processed_block',
+    )
+    .where('processed_block.chain_id = :chainId', { chainId: 97 })
+    .orderBy('processed_block.block_no', 'DESC')
+    .getOne();
 
-  //   expect(messages.length).toEqual(2);
-  //   expect(processedBlock.block_no).toEqual(24639471);
-  // });
+    expect(messages.length).toEqual(50);
+    expect(processedBlock.block_no).toEqual(24639471);
+  });
 });
