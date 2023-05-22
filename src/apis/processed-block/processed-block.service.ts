@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 import Web3 from 'web3';
 
 import { initClient } from '../../commons/utils/blockchain.js';
-import { chunkArray } from '../../commons/utils/index.js';
+import { chunkArray, chunkArrayReturnHex } from '../../commons/utils/index.js';
 import { NetworkEntity, ProcessedBlockEntity } from '../../entities/index.js';
 import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
@@ -159,21 +159,39 @@ export class ProcessedBlockService {
     await queryRunner.release();
   }
 
+  async scanEventByTopicsByBlockHexs(
+    client: Web3,
+    fromBlockHex: number,
+    toBlockHex: number,
+    topics: string[],
+  ) {
+    return await client.eth.getPastLogs({
+      fromBlock: fromBlockHex,
+      toBlock: toBlockHex,
+      topics: [topics],
+    });
+  }
+
   async scanEventByTopics(
     client: Web3,
     fromBlock: number,
     toBlock: number,
     topics: string[],
   ) {
-    const fromBlockHex = '0x' + fromBlock.toString(16);
-    const toBlockHex = '0x' + toBlock.toString(16);
-    const filters = {
-      fromBlock: fromBlockHex,
-      toBlock: toBlockHex,
-      topics: [topics],
+    const hexChunks = chunkArrayReturnHex(fromBlock, toBlock, 2);
+    console.log(hexChunks);
+    const getLogsPromises = [];
+    for (let chunkIndex = 0; chunkIndex < hexChunks.length; chunkIndex++) {
+      getLogsPromises.push(
+        this.scanEventByTopicsByBlockHexs(
+          client,
+          hexChunks[chunkIndex][0],
+          hexChunks[chunkIndex][1],
+          topics
+        )
+      );
     }
-    console.info(filters);
-    const logs = await client.eth.getPastLogs(filters);
-    return logs;
+    const logsNestedArray = await Promise.all(getLogsPromises);
+    return Array.prototype.concat([], ...logsNestedArray);
   }
 }

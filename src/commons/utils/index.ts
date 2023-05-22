@@ -24,6 +24,20 @@ export function chunkArray(from: number, to: number, chunkSize = 100) {
   return results;
 }
 
+export function chunkArrayReturnHex(from: number, to: number, chunkSize = 100) {
+  let results = [];
+  let current = from;
+  while (current <= to) {
+    if (current > to) break;
+    results.push([
+      '0x' + current.toString(16),
+      '0x' + Math.min(current + chunkSize - 1, to).toString(16)
+    ]);
+    current += chunkSize;
+  }
+  return results;
+}
+
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
