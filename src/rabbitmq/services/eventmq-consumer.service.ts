@@ -20,9 +20,9 @@ export class EventMqConsumer {
   ) { }
 
   @RabbitSubscribe({
-    exchange: `${process.env.RABBITMQ_EXCHANGE_NAME}-dlx`,
-    routingKey: "avacuscc.deadletter.events.*.*",
-    queue: "event-mq-dlx-worker",
+    exchange: process.env.EVENTOP_DLX_EXCHANGE_NAME,
+    routingKey: process.env.EVENTOP_DEAD_LETTER_ROUTING_KEY,
+    queue: process.env.EVENTOP_DEAD_LETTER_QUEUE,
     queueOptions: {
       durable: true
     },

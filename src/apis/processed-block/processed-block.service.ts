@@ -3,8 +3,14 @@ import { DataSource } from 'typeorm';
 import Web3 from 'web3';
 
 import { initClient } from '../../commons/utils/blockchain.js';
-import { chunkArray, chunkArrayReturnHex } from '../../commons/utils/index.js';
-import { NetworkEntity, ProcessedBlockEntity } from '../../entities/index.js';
+import {
+  chunkArray,
+  chunkArrayReturnHex
+} from '../../commons/utils/index.js';
+import {
+  NetworkEntity,
+  ProcessedBlockEntity
+} from '../../entities/index.js';
 import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 
@@ -54,7 +60,7 @@ export class ProcessedBlockService {
 
     const client = initClient(network.http_url);
     const currentBlockNo = await client.eth.getBlockNumber();
-    console.log('currentBlockNo', currentBlockNo);
+    // console.log('currentBlockNo', currentBlockNo);
     const currentBlock = await client.eth.getBlock(currentBlockNo, false);
 
     if (!currentBlock) {
@@ -94,9 +100,9 @@ export class ProcessedBlockService {
       // Any error except decodeLog error will make this step rollback
       await queryRunner.startTransaction();
       try {
-        console.info(
-          `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`,
-        );
+        // console.info(
+        //   `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`,
+        // );
         const logs = await this.scanEventByTopics(
           client,
           blockRange[0],
@@ -143,7 +149,7 @@ export class ProcessedBlockService {
         await queryRunner.commitTransaction();
         // End and commit transction
 
-        console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
+        // console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
       } catch (error) {
         await queryRunner.rollbackTransaction();
         console.log(error);
