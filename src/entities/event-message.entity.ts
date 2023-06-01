@@ -15,9 +15,6 @@ import {
 import { EventEntity } from './index.js';
 
 @Entity('event_messages')
-// @Index('idx_event_messages_uniq_msg', ['event_id', 'tx_id', 'log_index'], {
-//   unique: true,
-// })
 export class EventMessageEntity extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id: number;
