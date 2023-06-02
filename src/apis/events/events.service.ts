@@ -10,7 +10,6 @@ export class EventsService {
   constructor(private connection: DataSource) {}
 
   async registerEvent(createEventDto: CreateEventDto) {
-    console.log(createEventDto);
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
     try {
