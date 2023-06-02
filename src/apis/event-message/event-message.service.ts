@@ -92,7 +92,7 @@ export class EventMessageService {
         }
 
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
-        const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
+        const routingKey = message.event.routing_key || `eventop.events.${serviceName}.${eventTopic}`;
 
         console.log(`serviceName: ${serviceName}, routingKey: ${routingKey}`);
 
