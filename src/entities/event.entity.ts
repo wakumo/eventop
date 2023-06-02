@@ -40,6 +40,9 @@ export class EventEntity extends BaseEntity {
   @Column({ nullable: true })
   event_topic: string;
 
+  @Column({ nullable: true })
+  routing_key: string;
+
   @Column({ type: 'text', nullable: true })
   abi: string;
 

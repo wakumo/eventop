@@ -26,6 +26,7 @@ export class EventSeed extends CommandRunner {
           abi: event.abi,
           service_name: event.service_name,
           contract_addresses: contractAddresses,
+          routing_key: event.routing_key,
         });
       }
     }

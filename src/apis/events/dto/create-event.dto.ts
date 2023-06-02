@@ -13,6 +13,9 @@ export class CreateEventDto {
   @IsNotEmpty()
   service_name: string;
 
+  @IsNotEmpty()
+  routing_key: string;
+
   @IsOptional()
   contract_addresses?: string[];
 }
