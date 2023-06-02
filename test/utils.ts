@@ -64,6 +64,7 @@ export async function seedTestEvents(queryRunner: QueryRunner) {
         name: event.name,
         abi: event.abi,
         service_name: event.service_name,
+        routing_key: event.routing_key,
       });
     }
   }
