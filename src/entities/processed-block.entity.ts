@@ -6,7 +6,7 @@ import {
   Entity,
   Index,
   JoinColumn,
-  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
@@ -31,7 +31,7 @@ export class ProcessedBlockEntity extends BaseEntity {
   @Column({ nullable: true })
   block_hash: string;
 
-  @ManyToOne(() => NetworkEntity, (network) => network.chain_id)
+  @OneToOne(() => NetworkEntity, (network) => network.chain_id)
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
   network: Relation<NetworkEntity>;
 
