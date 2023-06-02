@@ -1,7 +1,7 @@
 import { AmqpConnection, RabbitMQModule } from "@golevelup/nestjs-rabbitmq";
 import { Global, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { RabbitMqConfigService } from "../../src/config/rabbitmq.config";
+import { RabbitMqConfigService } from "../../src/config/rabbitmq.config.js";
 import { EventMqProducer } from "../../src/rabbitmq/services/eventmq-producer.service.js";
 
 @Global()
@@ -17,4 +17,4 @@ import { EventMqProducer } from "../../src/rabbitmq/services/eventmq-producer.se
 })
 export class EventMqMockModule { }
 
-jest.mock("../../src/rabbitmq/eventmq-job.module.js", () => EventMqMockModule)
+jest.mock("../../src/rabbitmq/eventmq-app.module.js", () => EventMqMockModule)

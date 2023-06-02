@@ -11,13 +11,10 @@ jest.mock('@golevelup/nestjs-rabbitmq', () => {
     RabbitMQModule: {
       forRootAsync: jest.fn(() => MockModule),
     },
-      AmqpConnection: jest.fn().mockImplementation(() => ({
-        publish: jest.fn().mockImplementation(() => { console.log("Message published via RabbitMQ mocks") }),
-          request: jest.fn().mockImplementation(() => {
-          console.log("Message requested via RabbitMQ mocks");
-          return true;
-        })
-      }))
+    AmqpConnection: jest.fn().mockImplementation(() => ({
+      publish: jest.fn().mockImplementation(() => true),
+      request: jest.fn().mockImplementation(() => true)
+    }))
   })
 })
 

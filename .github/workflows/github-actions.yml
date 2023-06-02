@@ -47,7 +47,7 @@ jobs:
 
       RABBITMQ_HOST: 127.0.0.1
       RABBITMQ_PORT: 5672
-      RABBITMQ_EXCHANGE_NAME: eventop-exchange-name
+      RABBITMQ_EXCHANGE_NAME: eventop_exchange
 
     steps:
       - uses: actions/checkout@v3
