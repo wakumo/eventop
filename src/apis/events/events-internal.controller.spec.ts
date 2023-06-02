@@ -16,7 +16,6 @@ jest.setTimeout(60000);
 describe('EventsInternalController', () => {
   let controller: EventsInternalController;
   let connection: DataSource;
-  // let eventService: EventsService;
   let app: INestApplication;
 
   beforeEach(async () => {
