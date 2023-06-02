@@ -62,9 +62,9 @@ describe('ProcessedBlockService', () => {
     const processedBlock = await ProcessedBlockEntity.createQueryBuilder(
       'processed_block',
     )
-    .where('processed_block.chain_id = :chainId', { chainId: 97 })
-    .orderBy('processed_block.block_no', 'DESC')
-    .getOne();
+      .where('processed_block.chain_id = :chainId', { chainId: 97 })
+      .orderBy('processed_block.block_no', 'DESC')
+      .getOne();
 
     expect(messages.length).toEqual(50);
     expect(processedBlock.block_no).toEqual(24639471);

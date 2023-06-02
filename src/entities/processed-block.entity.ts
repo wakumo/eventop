@@ -5,10 +5,9 @@ import {
   CreateDateColumn,
   Entity,
   Index,
-  JoinColumn,
-  OneToOne,
+  JoinColumn, OneToOne,
   PrimaryGeneratedColumn,
-  Relation,
+  Relation
 } from 'typeorm';
 import { NetworkEntity } from './network.entity.js';
 
@@ -32,7 +31,7 @@ export class ProcessedBlockEntity extends BaseEntity {
   block_hash: string;
 
   @OneToOne(() => NetworkEntity, (network) => network.chain_id)
-  @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
+  @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id', foreignKeyConstraintName: 'fk_networks_processed_blocks' })
   network: Relation<NetworkEntity>;
 
   @Exclude()

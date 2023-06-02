@@ -47,10 +47,8 @@ export class NetworkEntity extends BaseEntity {
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
   events: Relation<EventEntity>[];
 
-  @OneToOne(() => ProcessedBlockEntity, (processed_block) => processed_block.chain_id, {
-    nullable: true,
-  })
-  @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
+  @OneToOne(() => ProcessedBlockEntity, (processed_block) => processed_block.chain_id, { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id', foreignKeyConstraintName: 'fk_networks_processed_blocks' })
   processed_block: Relation<ProcessedBlockEntity>;
 
   @Expose()
