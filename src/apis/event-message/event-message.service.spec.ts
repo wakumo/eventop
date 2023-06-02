@@ -1,8 +1,5 @@
 jest.setTimeout(60000);
 
-import "./mock-rabbitmq-spec.event-message";
-import "../../../test/utils/mock-eventmq.module";
-
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   clearDB,
@@ -41,6 +38,7 @@ describe('EventMessageService', () => {
   afterEach(async () => {
     await clearDB(connection)
     await queryRunner.release();
+    await connection.destroy();
   })
 
   it('should be defined', () => {
@@ -48,10 +46,12 @@ describe('EventMessageService', () => {
   });
 
   it("should send rabbitmq message", async () => {
-    const event = await EventEntity.findOne({ where: {
-      routing_key: "eventop.events.balance.transfer_erc20",
-      chain_id: 1,
-    }});
+    const event = await EventEntity.findOne({
+      where: {
+        routing_key: "eventop.events.balance.transfer_erc20",
+        chain_id: 1,
+      }
+    });
 
     const eventMessage = await EventMessageEntity.create({
       payload: `{"message": "test_message"}`,

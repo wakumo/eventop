@@ -20,7 +20,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest --maxWorkers=1 --forceExit",
+    "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -109,6 +109,9 @@
       "json",
       "ts"
     ],
+    "maxWorkers": 1,
+    "testTimeout": 60000,
+    "forceExit": true,
     "resolver": "ts-jest-resolver",
     "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
@@ -118,6 +121,10 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
+    "setupFiles": [
+      "<rootDir>/test/setup.ts"
+    ],
+    "verbose": true,
     "moduleNameMapper": {
       "^@/src/(.*)$": "<rootDir>/$1",
       "^src/(.*)$": "<rootDir>/$1",

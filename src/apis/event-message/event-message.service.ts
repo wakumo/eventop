@@ -94,8 +94,6 @@ export class EventMessageService {
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
         const routingKey = message.event.routing_key || `eventop.events.${serviceName}.${eventTopic}`;
 
-        console.log(`serviceName: ${serviceName}, routingKey: ${routingKey}`);
-
         const body = {
           id: message.id,
           payload: JSON.parse(message.payload),

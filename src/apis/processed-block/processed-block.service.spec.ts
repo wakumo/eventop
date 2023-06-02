@@ -1,6 +1,4 @@
 import './mock-web3-spec.processed-block.js';
-import './mock-rabbitmq-spec.event-message';
-import '../../../test/utils/mock-eventmq.module';
 import '../../commons/utils/bigint-monkey-patching.js';
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -21,7 +19,7 @@ import { EventMessageService } from '../event-message/event-message.service.js';
 import { ProcessedBlockEntity } from '../../entities/processed-block.entity.js';
 import { NetworkEntity } from '../../entities/network.entity.js';
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
-import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module';
+import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module.js';
 
 describe('ProcessedBlockService', () => {
   let service: ProcessedBlockService;
@@ -44,12 +42,9 @@ describe('ProcessedBlockService', () => {
     }).save();
   });
 
-  afterAll(async () => {
-    await connection.destroy();
-  });
-
   afterEach(async () => {
     await clearDB(connection);
+    await connection.destroy();
   });
 
   it('should be defined', async () => {
@@ -62,9 +57,9 @@ describe('ProcessedBlockService', () => {
     const processedBlock = await ProcessedBlockEntity.createQueryBuilder(
       'processed_block',
     )
-    .where('processed_block.chain_id = :chainId', { chainId: 97 })
-    .orderBy('processed_block.block_no', 'DESC')
-    .getOne();
+      .where('processed_block.chain_id = :chainId', { chainId: 97 })
+      .orderBy('processed_block.block_no', 'DESC')
+      .getOne();
 
     expect(messages.length).toEqual(50);
     expect(processedBlock.block_no).toEqual(24639471);

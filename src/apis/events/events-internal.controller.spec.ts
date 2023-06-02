@@ -34,13 +34,10 @@ describe('EventsInternalController', () => {
     await app.init();
   });
 
-  afterAll(async () => {
-    await connection.destroy();
-    await app.close();
-  });
-
   afterEach(async () => {
     await clearDB(connection);
+    await connection.destroy();
+    await app.close();
   });
 
   it('should be defined', () => {
