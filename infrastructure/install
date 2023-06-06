@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# source .env
+
+
+
+
+# STEPS 1: set rabbitmq.local in /etc/hosts
+if [ -z $(grep "'127.0.0.1 $RABBITMQ_LOCAL_DOMAIN'" "/etc/hosts") ]; then
+  echo "the $RABBITMQ_LOCAL_DOMAIN is exist in /etc/hosts" >&2
+else
+  sudo -- sh -c "echo '127.0.0.1 $$RABBITMQ_LOCAL_DOMAIN' >> /etc/hosts"
+fi
+
+# STEPS 2: start rabbitmq docker compose
+docker-compose -f ./rabbitmq/docker-compose.yml up -d
+
+# STEPS 3: wait for rabbitmq to start
+sleep 30
+
+# STEPS 4: create rabbitmq user
+docker exec -it rabbitmq bash -c "rabbitmqctl add_user $RABBITMQ_DEFAULT_USER $RABBITMQ_DEFAULT_PASS"
+docker exec -it rabbitmq bash -c "rabbitmqctl set_user_tags $RABBITMQ_DEFAULT_USER administrator"
+docker exec -it rabbitmq bash -c "rabbitmqctl set_permissions -p / $RABBITMQ_DEFAULT_USER \".*\" \".*\" \".*\""
+
+# # STEPS 5: create rabbitmq vhost
+docker exec -it rabbitmq bash -c "rabbitmqctl add_vhost $RABBITMQ_DEFAULT_VHOST"
+docker exec -it rabbitmq bash -c "rabbitmqctl set_permissions -p $RABBITMQ_DEFAULT_VHOST $RABBITMQ_DEFAULT_USER \".*\" \".*\" \".*\""
+
+# # STEPS 6: create rabbitmq exchange
+# docker exec -it rabbitmq bash -c "rabbitmqadmin declare exchange name=eventop type=direct durable=true"
+
+# # STEPS 7: create rabbitmq queue
+# docker exec -it rabbitmq bash -c "rabbitmqadmin declare queue name=order durable=true"
+# docker exec -it rabbitmq bash -c "rabbitmqadmin declare queue name=payment durable=true"
+# docker exec -it rabbitmq bash -c "rabbitmqadmin declare queue name=shipment durable=true"
+
+# STEPS 8: open rabbitmq management ui
+open $RABBITMQ_LOCAL_MANAGEMENT_URL
+
+

@@ -1,0 +1,42 @@
+version: '3.9' 
+services:
+  rabbitmq-proxy:
+    container_name: rabbitmq-proxy
+    image: traefik:v2.4 # The official v2 Traefik docker image
+    ports:
+      - "80:80" # The HTTP port
+      # - "8080:8080" # The Web UI (enabled by --api.insecure=true)
+    volumes:
+      - ./tmp/traefik/log:/traefik/log
+      - ./.traefik/traefik.yml:/etc/traefik/traefik.yml
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+    networks:
+      - rabbitmq_network
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.8-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "${RABBITMQ_VM_MEMORY_HIGH_WATERMARK}"
+    ports:
+      # - "15672:15672"
+      - "5672:5672"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=rabbitmq"
+      - "traefik.http.routers.rabbitmq.rule=(Host(`rabbitmq.local`) && PathPrefix(`/management`))"
+      
+      - "traefik.http.routers.rabbitmq.middlewares=rabbitmqstripprefix"
+      - "traefik.http.middlewares.rabbitmqstripprefix.stripprefix.prefixes=/management" # strip /management
+      - "traefik.http.middlewares.rabbitmqstripprefix.stripprefix.forceSlash=false"
+      - 'traefik.http.services.rabbitmq.loadbalancer.server.port=15672'
+    volumes:
+      - ./tmp/rabbitmq/data:/var/lib/rabbitmq
+      - ./tmp/rabbitmq/log/:/var/log/rabbitmq
+    hostname: rabbitmq
+    networks:
+      - rabbitmq_network
+networks:
+  rabbitmq_network:
+    name: "rabbitmq_network"

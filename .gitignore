@@ -39,3 +39,6 @@ lerna-debug.log*
 logfile
 
 /scripts
+
+
+/infrastructure/rabbitmq/tmp

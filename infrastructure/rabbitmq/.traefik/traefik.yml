@@ -1,0 +1,43 @@
+################################################################
+#
+# Configuration sample for Traefik v2.
+#
+# For Traefik v1: https://github.com/traefik/traefik/blob/v2.4/traefik.sample.toml
+#
+################################################################
+
+################################################################
+# Global configuration
+################################################################
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: true
+
+################################################################
+# EntryPoints configuration
+################################################################
+entryPoints:
+  web:
+    address: :80
+
+  websecure:
+    address: :443
+
+################################################################
+# Traefik logs configuration
+################################################################
+log:
+ level: DEBUG
+ filePath: /traefik/log/debug.log
+ format: json
+
+accessLog:
+ filePath: /traefik/log/access.log
+ format: json
+
+################################################################
+# Docker configuration backend
+################################################################
+providers:
+ docker:
+   exposedByDefault: false
