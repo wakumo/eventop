@@ -95,7 +95,7 @@ export const contractEvents = [
   {
     "service_name": "sowaka_governance",
     // event VeSWKAdminDistributed(address user, uint256 veSWKAmount, uint256 stakingPeriod, uint256 distributedAt, uint256 stakedIndex);
-    "name": "VeSWKAdminDistributed(address,uint256,uint256)",
+    "name": "VeSWKAdminDistributed(address,uint256,uint256,uint256,uint256)",
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "distributedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedIndex", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
     "chain_ids": [80001, 97],
   },
