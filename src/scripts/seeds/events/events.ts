@@ -63,10 +63,12 @@ export const contractEvents = [
     "service_name": "sowaka_governance",
     "name": "Transfer(address,address,uint256)",
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}], "name": "Transfer", "type": "event"}',
-    "chain_ids": [80001],
+    "chain_ids": [80001, 97],
     "contract_addresses": [
       "0xeC84c83b8911233fA287d204690dA34F54369456", // SWK mumbai
-      "0x55340d3a1Ebf71dD9A84012c7DFf60dF0F392Fb8" // veSWK mumbai
+      "0x1Cc89a060b8378f5fe56795D48822Dc142E8083B", // SWK bsc testnet
+      "0x946b58AC26bbdcb817DCA3A06F312452f6485B3D", // veSWK mumbai
+      "0x0e3447bc457155d0a75373916c26bC2f42Cfb350", // veSWK bsc testnet
     ],
   },
   {
@@ -74,27 +76,27 @@ export const contractEvents = [
     // event SWKStaked(address user, uint256 swkAmount, uint256 veSWKAmount, uint256 stakingPeriod, uint256 stakedAt, uint256 index, uint256 apy);
     "name": "SWKStaked(address,uint256,uint256,uint256,uint256,uint256,uint256)",
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "swkAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "apy", "type": "uint256" } ], "name": "SWKStaked", "type": "event" }',
-    "chain_ids": [80001],
+    "chain_ids": [80001, 97],
   },
   {
     "service_name": "sowaka_governance",
     // event SWKUnstaked(address user, uint256 veSWKAmount, uint256 unstakedAt, uint256 index);
     "name": "SWKUnstaked(address,uint256,uint256,uint256)",
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "unstakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" } ], "name": "SWKUnstaked", "type": "event" }',
-    "chain_ids": [80001],
+    "chain_ids": [80001, 97],
   },
   {
     "service_name": "sowaka_governance",
     // event SWKClaimedMiningReward(address user, uint256 totalReward, uint256 claimedAt);
     "name": "SWKClaimedMiningReward(address,uint256,uint256)",
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "totalReward", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "claimedAt", "type": "uint256" } ], "name": "SWKClaimedMiningReward", "type": "event" }',
-    "chain_ids": [80001],
+    "chain_ids": [80001, 97],
   },
   {
     "service_name": "sowaka_governance",
-    // event VeSWKAdminDistributed(address user, uint256 amount, uint256 distributedAt);
+    // event VeSWKAdminDistributed(address user, uint256 veSWKAmount, uint256 stakingPeriod, uint256 distributedAt, uint256 stakedIndex);
     "name": "VeSWKAdminDistributed(address,uint256,uint256)",
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "distributedAt", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
-    "chain_ids": [80001],
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "distributedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedIndex", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
+    "chain_ids": [80001, 97],
   },
 ]
