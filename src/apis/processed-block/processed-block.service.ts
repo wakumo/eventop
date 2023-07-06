@@ -54,7 +54,6 @@ export class ProcessedBlockService {
 
     const client = initClient(network.http_url);
     const currentBlockNo = await client.eth.getBlockNumber();
-    console.log('currentBlockNo', currentBlockNo);
     const currentBlock = await client.eth.getBlock(currentBlockNo, false);
 
     if (!currentBlock) {
@@ -103,14 +102,12 @@ export class ProcessedBlockService {
           blockRange[1],
           topics,
         );
-        console.info('Get logs done');
         let eventMessages = [];
         for (const log of logs) {
           const topic = log['topics'][0];
           const events = registedEvents.filter(
             (event) => event.event_topic === topic && event.chain_id === chainId,
           );
-          console.info('Filter event done');
           events.map((event) => {
             const newMessage = this.eventMsgService.createEventMessage(
               event,
@@ -120,7 +117,6 @@ export class ProcessedBlockService {
               eventMessages.push(newMessage);
             }
           });
-          console.info('Create event message done');
         }
         if (eventMessages.length !== 0) {
           await queryRunner.manager.save(eventMessages, { chunk: 200 });
@@ -136,22 +132,18 @@ export class ProcessedBlockService {
               }
             );
           } else {
-            console.info('Starting create proccessed block');
             await queryRunner.manager.create(ProcessedBlockEntity, {
               chain_id: chainId,
               block_no: blockRange[1],
               block_hash: currentBlock.hash?.toLowerCase(),
             }).save();
-            console.info('Done create proccessed_block');
           }
         }
         await queryRunner.commitTransaction();
         // End and commit transction
-
-        console.log(`[ChainId: ${chainId}] Last scanned block no: ${toBlock}`);
       } catch (error) {
         await queryRunner.rollbackTransaction();
-        console.log(error);
+        console.error(error);
         break;
       }
     }
@@ -179,7 +171,6 @@ export class ProcessedBlockService {
     topics: string[],
   ) {
     const hexChunks = chunkArrayReturnHex(fromBlock, toBlock, 2);
-    console.log(hexChunks);
     const getLogsPromises = [];
     for (let chunkIndex = 0; chunkIndex < hexChunks.length; chunkIndex++) {
       getLogsPromises.push(

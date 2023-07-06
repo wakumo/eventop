@@ -47,7 +47,7 @@ export class EventMessageService {
         log['topics'],
       );
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return null;
     }
 
@@ -80,6 +80,7 @@ export class EventMessageService {
     await queryRunner.connect();
 
     try {
+      console.log(`${new Date()}Starting send ${pendingMessages.length} pending messages`);
       for (const message of pendingMessages) {
 
         // Next if message.event have contract_addresses settings
@@ -93,9 +94,6 @@ export class EventMessageService {
 
         const { service_name: serviceName, event_topic: eventTopic } = message.event;
         const routingKey = `avacuscc.events.${serviceName}.${eventTopic}`;
-
-        console.log(`serviceName: ${serviceName}, routingKey: ${routingKey}`);
-
         const body = {
           id: message.id,
           payload: JSON.parse(message.payload),
@@ -112,6 +110,7 @@ export class EventMessageService {
         this.producer.publish(null, routingKey, body);
       }
       await queryRunner.manager.delete(EventMessageEntity, pendingMessages);
+      console.log(`${new Date()}Finished send pending messages`);
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
       console.log(ex);
@@ -131,13 +130,11 @@ export class EventMessageService {
 
       // Delete all delivered event messsages
       // which are delivered to RabbitMq
-      const deliveredMessages = await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
+      await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
         .where('event_messages.status = :status', { status: EventMessageStatus.DELIVERED })
         .delete()
         .execute();
       await queryRunner.commitTransaction();
-
-      console.info(`Deleted all delivered messages: ${deliveredMessages.affected}`);
     } catch (error) {
       console.error(error);
       await queryRunner.rollbackTransaction();
