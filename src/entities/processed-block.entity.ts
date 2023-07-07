@@ -2,7 +2,7 @@ import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
   Column,
-  CreateDateColumn,
+  UpdateDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -36,6 +36,6 @@ export class ProcessedBlockEntity extends BaseEntity {
   network: Relation<NetworkEntity>;
 
   @Exclude()
-  @CreateDateColumn()
-  created_at: Date;
+  @UpdateDateColumn()
+  updated_at: Date;
 }
