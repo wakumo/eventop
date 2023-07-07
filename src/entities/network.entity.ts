@@ -26,6 +26,9 @@ export class NetworkEntity extends BaseEntity {
   @Column({ nullable: true })
   http_url: string;
 
+  @Column({ type: 'varchar', array: true, default: [] })
+  node_urls: string[];
+
   @Exclude()
   @Column({ nullable: true })
   wss_url: string;

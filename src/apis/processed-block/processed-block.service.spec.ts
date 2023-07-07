@@ -22,6 +22,7 @@ import { ProcessedBlockEntity } from '../../entities/processed-block.entity.js';
 import { NetworkEntity } from '../../entities/network.entity.js';
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module';
+import { NetworkService } from '../network/network.service.js';
 
 describe('ProcessedBlockService', () => {
   let service: ProcessedBlockService;
@@ -31,7 +32,12 @@ describe('ProcessedBlockService', () => {
     connection = await getSynchronizeConnection();
     const module: TestingModule = await Test.createTestingModule({
       imports: [...IMPORT_MODULES, EventMqMockModule],
-      providers: [ProcessedBlockService, EventsService, EventMessageService],
+      providers: [
+        ProcessedBlockService,
+        EventsService,
+        EventMessageService,
+        NetworkService,
+      ],
     }).compile();
 
     service = module.get<ProcessedBlockService>(ProcessedBlockService);

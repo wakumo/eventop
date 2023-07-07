@@ -7,6 +7,7 @@ import { chunkArray, chunkArrayReturnHex } from '../../commons/utils/index.js';
 import { NetworkEntity, ProcessedBlockEntity } from '../../entities/index.js';
 import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
+import { NetworkService } from '../network/network.service.js';
 
 @Injectable()
 export class ProcessedBlockService {
@@ -17,6 +18,8 @@ export class ProcessedBlockService {
     private eventService: EventsService,
     @Inject(forwardRef(() => EventMessageService))
     private eventMsgService: EventMessageService,
+    @Inject(forwardRef(() => NetworkService))
+    private networkService: NetworkService,
   ) {}
 
   async latestProccessedBlockBy(chainId: number) {
@@ -34,7 +37,7 @@ export class ProcessedBlockService {
     toBlock?: number,
     ignoreUpdate = false
   ) {
-    const network = await NetworkEntity.findOne({
+    let network = await NetworkEntity.findOne({
       where: { chain_id: chainId },
     });
     if (!network) {
@@ -52,6 +55,7 @@ export class ProcessedBlockService {
       nextBlockNo = latestProcessBlock.block_no + 1;
     }
 
+    network = await this.networkService.validateAvailableNodes(network);
     const client = initClient(network.http_url);
     const currentBlockNo = await client.eth.getBlockNumber();
     const currentBlock = await client.eth.getBlock(currentBlockNo, false);

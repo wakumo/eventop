@@ -16,6 +16,7 @@ import { EventsModule } from './apis/events/events.module.js';
 import { ProcessedBlockModule } from './apis/processed-block/processed-block.module.js';
 import { EventMqAppModule } from "./rabbitmq/eventmq-app.module.js";
 import { EventMessageModule } from "./apis/event-message/event-message.module.js";
+import { NetworkModule } from './apis/network/network.module.js';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { EventMessageModule } from "./apis/event-message/event-message.module.js
     EventsModule,
     ProcessedBlockModule,
     EventMessageModule,
-    EventMqAppModule
+    EventMqAppModule,
+    NetworkModule
   ],
   controllers: [AppController],
   providers: [AppService, ...SCRIPTS],
