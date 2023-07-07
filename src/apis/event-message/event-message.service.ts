@@ -47,7 +47,6 @@ export class EventMessageService {
         log['topics'],
       );
     } catch (error) {
-      console.error(error);
       return null;
     }
 
