@@ -20,7 +20,7 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
       database: this.configService.get('db.name'),
       password: this.configService.get('db.password'),
       entities: [path.join(__dirname, '../**/*.entity{.ts,.js}')],
-      logging: true,
+      logging: ['warn', 'error', 'migration'],
     };
   }
 }
