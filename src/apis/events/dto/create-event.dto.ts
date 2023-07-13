@@ -15,4 +15,7 @@ export class CreateEventDto {
 
   @IsOptional()
   contract_addresses?: string[];
+
+  @IsOptional()
+  routing_key?: string;
 }

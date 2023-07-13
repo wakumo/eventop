@@ -19,13 +19,14 @@ export class EventSeed extends CommandRunner {
             return contract.toLowerCase();
           });
         }
-
+        const routingKey = event['routing_key'] ? event['routing_key'] : null;
         await this.eventService.registerEvent({
           chain_id: chainId,
           name: event.name,
           abi: event.abi,
           service_name: event.service_name,
           contract_addresses: contractAddresses,
+          routing_key: routingKey,
         });
       }
     }

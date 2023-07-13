@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Relation,
+  Unique,
 } from 'typeorm';
 import { EventMessageEntity } from './index.js';
 
@@ -39,6 +40,10 @@ export class EventEntity extends BaseEntity {
   @Index()
   @Column({ nullable: true })
   event_topic: string;
+
+  @Column({ nullable: true })
+  @Index("idx-unique-routingkey-events", { unique: true })
+  routing_key: string;
 
   @Column({ type: 'text', nullable: true })
   abi: string;
