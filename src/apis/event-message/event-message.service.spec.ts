@@ -48,7 +48,7 @@ describe('EventMessageService', () => {
   });
 
   it("should send rabbitmq message", async () => {
-    const event = await EventEntity.findOne({ where: { event_topic: "0x1d0839dc007189efef00a653ba1960c7ddb01b0b6fbb25c238a8ab5c8e47fc97" } });
+    const event = await EventEntity.findOne({ where: { routing_key: 'avacuscc.events.ctn.campaign.created' } });
     const eventMessage = await EventMessageEntity.create({
       payload: `{"message": "test_message"}`,
       tx_id: "0x25ec682fb51dd5d753defd0cc001b9d209da4899512a5340e806d2a790e34ec9",
@@ -68,13 +68,13 @@ describe('EventMessageService', () => {
     // and returned with true (other service has received and accepted message)
     expect(eventMqRequest).toHaveBeenCalledWith(
       "avacuscc-event-mq",
-      "avacuscc.events.ctn.0x1d0839dc007189efef00a653ba1960c7ddb01b0b6fbb25c238a8ab5c8e47fc97",
+      "avacuscc.events.ctn.campaign.created",
       {
         id: eventMessage.id,
         payload: { "message": "test_message" },
         serviceName: 'ctn',
-        eventName: 'CampaignCreated(bytes32,bytes16,address,address,address,uint8)',
-        eventTopic: '0x1d0839dc007189efef00a653ba1960c7ddb01b0b6fbb25c238a8ab5c8e47fc97',
+        eventName: "CampaignCreated(bytes32,bytes16,address,address,address,uint8,uint256,uint256)",
+        eventTopic: '0x91ae3e686459a1bf51a7d31d88be264d8b0589b0729b28e83e73ba36d4329969',
         chainId: 97,
         txId: '0x25ec682fb51dd5d753defd0cc001b9d209da4899512a5340e806d2a790e34ec9',
         logIndex: 1,

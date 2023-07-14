@@ -17,6 +17,9 @@ import { EventMessageEntity } from './index.js';
 @Index('idx_events_uniq_event', ['chain_id', 'event_topic', 'service_name', 'abi_inputs_hash'], {
   unique: true,
 })
+@Index('idx_events_uniq_routingkey_event', ['chain_id', 'routing_key', 'service_name'], {
+  unique: true,
+})
 export class EventEntity extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id: number;
@@ -42,7 +45,6 @@ export class EventEntity extends BaseEntity {
   event_topic: string;
 
   @Column({ nullable: true })
-  @Index("idx-unique-routingkey-events", { unique: true })
   routing_key: string;
 
   @Column({ type: 'text', nullable: true })
