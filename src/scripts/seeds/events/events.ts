@@ -101,4 +101,20 @@ export const contractEvents = [
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "distributedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedIndex", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
     "chain_ids": [80001, 97],
   },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_created",
+    // event SnsCommunityCreated(address creator, string name, address community, address communityBadge);
+    "name": "SnsCommunityCreated(address,string,address,address)",
+    "abi": '{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"creator","type":"address"},{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":false,"internalType":"address","name":"community","type":"address"},{"indexed":false,"internalType":"address","name":"communityBadge","type":"address"}],"name":"SnsCommunityCreated","type":"event"}',
+    "chain_ids": [80001, 97],
+  },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_condition_updated",
+    // event SnsCommunityConditionUpdated(DataTypes.ConditionTypes conditionType, DataTypes.TokenType tokenType, address contractAddr, uint256 tokenId, uint256 minAmount);
+    "name": "SnsCommunityConditionUpdated(uint8,uint8,address,uint256,uint256)",
+    "abi": '{"anonymous":false,"inputs":[{"indexed":false,"internalType":"enum DataTypes.ConditionTypes","name":"conditionType","type":"uint8"},{"indexed":false,"internalType":"enum DataTypes.TokenType","name":"tokenType","type":"uint8"},{"indexed":false,"internalType":"address","name":"contractAddr","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"minAmount","type":"uint256"}],"name":"SnsCommunityConditionUpdated","type":"event"}',
+    "chain_ids": [80001, 97],
+  },
 ]
