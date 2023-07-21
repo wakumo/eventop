@@ -34,7 +34,7 @@
     "db:migrate:generate": "yarn typeorm migration:generate",
     "db:migrate:up": "yarn typeorm migration:run",
     "migrate_and_start": "yarn run ts-node-esm create_db.ts; yarn db:migrate:up; yarn start",
-    "migrate_and_start_prod": "yarn run ts-node-esm create_db.ts; yarn db:migrate:up; yarn build; yarn start:prod",
+    "migrate_and_start_prod": "node dist/create_db.js; yarn db:migrate:up; yarn start:prod",
     "db:migrate:down": "yarn typeorm migration:revert"
   },
   "dependencies": {
