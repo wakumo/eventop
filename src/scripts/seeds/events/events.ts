@@ -104,9 +104,9 @@ export const contractEvents = [
   {
     "service_name": "sns",
     "routing_key": "avacuscc.events.sns.sns_community_created",
-    // event SnsCommunityCreated(address creator, string name, address community, address communityBadge, bytes32 communityId);
-    "name": "SnsCommunityCreated(address,string,address,address,bytes32)",
-    "abi": '{"anonymous":false,"inputs":[{"indexed": false,"internalType":"address","name":"creator","type":"address"},{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":false,"internalType":"address","name":"community","type":"address"},{"indexed":false,"internalType":"address","name":"communityBadge","type":"address" },{"indexed":false,"internalType":"bytes32","name":"communityId","type":"bytes32"}],"name":"SnsCommunityCreated","type":"event"}',
+    // event SnsCommunityCreated(address creator, string name, address community, address communityBadge, bytes32 communityId, bytes16 salt, bytes conditions);
+    "name": "SnsCommunityCreated(address,string,address,address,bytes32,bytes16,bytes)",
+    "abi": '{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"creator","type":"address"},{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":false,"internalType":"address","name":"community","type":"address"},{"indexed":false,"internalType":"address","name":"communityBadge","type":"address"},{"indexed":false,"internalType":"bytes32","name":"communityId","type":"bytes32"},{"indexed":false,"internalType":"bytes16","name":"salt","type":"bytes16"},{"indexed":false,"internalType":"bytes","name":"conditions","type":"bytes"}],"name":"SnsCommunityCreated","type":"event"}',
     "chain_ids": [80001, 97],
   },
   {
