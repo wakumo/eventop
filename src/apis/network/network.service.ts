@@ -41,7 +41,6 @@ export class NetworkService {
         nodeCheckPromises.push(this.isAvailableNode(nodeUrl));
       }
       const nodeStatuses = await Promise.all(nodeCheckPromises);
-      console.log(`nodeStatuses:`, nodeStatuses);
       const availableNodes = nodeStatuses.filter((node) => node.isAvailable);
 
       if (availableNodes.length > 0) {
