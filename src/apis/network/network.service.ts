@@ -7,14 +7,21 @@ import { NoAvailableNodeException } from '../../commons/exceptions/not_available
 export class NetworkService {
   constructor() {}
 
+  // @dev: To check if the node is available
+  // getBlockNumber is not guaranteed to make sure the node is available
+  // So we use getPastLogs to check if the node is available
+  // @param: url: string
   private async isAvailableNode(url: string) {
     let client = initClient(url);
 
     try {
-      const currentBlockNo = await client.eth.getBlockNumber();
-      if (currentBlockNo) {
-        return { url: url, isAvailable: true };
-      }
+      await client.eth.getPastLogs({
+        fromBlock: 'latest',
+        toBlock: 'latest',
+        topics: [['0x6178e95c138f06036cdc07a49ed6a3d23008969fa143baeceb037ebae22e8d14']], // any topic is ok
+      });
+
+      return { url: url, isAvailable: true };
     } catch (ex) {
       console.error(ex);
     }
@@ -34,6 +41,7 @@ export class NetworkService {
         nodeCheckPromises.push(this.isAvailableNode(nodeUrl));
       }
       const nodeStatuses = await Promise.all(nodeCheckPromises);
+      console.log(`nodeStatuses:`, nodeStatuses);
       const availableNodes = nodeStatuses.filter((node) => node.isAvailable);
 
       if (availableNodes.length > 0) {

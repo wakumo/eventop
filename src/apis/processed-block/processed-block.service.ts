@@ -59,30 +59,30 @@ export class ProcessedBlockService {
     const client = initClient(network.http_url);
     const currentBlockNo = await client.eth.getBlockNumber();
     const currentBlock = await client.eth.getBlock(currentBlockNo, false);
-
     if (!currentBlock) {
       console.error(`Can't fetch current block on the ${network.chain_id} network`);
       return;
     }
 
-    // Validate orphan block or not to rescan last chunk blocks
-    // Check if (latestProcessBlock.block_no + 1).parentHash === latestProcessBlock.block_hash
-    // True is valid, False is orphan block
-    //
-    // Only check if latestProcessBlock is not null and its block_hash is not null
-    if (latestProcessBlock && latestProcessBlock.block_hash && latestProcessBlock.block_no < currentBlockNo) {
-      const nextStartBlock = await client.eth.getBlock(latestProcessBlock.block_no + 1, false);
-      if (!nextStartBlock) {
-        console.error(`Can't fetch nextStartBlock on the ${network.chain_id} network`);
-        return;
-      }
-      if (nextStartBlock.parentHash?.toLowerCase() !== latestProcessBlock.block_hash?.toLowerCase()) {
-        fromBlock = latestProcessBlock.block_no - network.scan_range_no; // rescan last chunk blocks if orphan block
-      }
-    }
+    // // Validate orphan block or not to rescan last chunk blocks
+    // // Check if (latestProcessBlock.block_no + 1).parentHash === latestProcessBlock.block_hash
+    // // True is valid, False is orphan block
+    // //
+    // // Only check if latestProcessBlock is not null and its block_hash is not null
+    // if (latestProcessBlock && latestProcessBlock.block_hash && latestProcessBlock.block_no < currentBlockNo) {
+    //   const nextStartBlock = await client.eth.getBlock(latestProcessBlock.block_no + 1, false);
+    //   if (!nextStartBlock) {
+    //     console.error(`Can't fetch nextStartBlock on the ${network.chain_id} network`);
+    //     return;
+    //   }
+    //   if (nextStartBlock.parentHash?.toLowerCase() !== latestProcessBlock.block_hash?.toLowerCase()) {
+    //     fromBlock = latestProcessBlock.block_no - network.scan_range_no; // rescan last chunk blocks if orphan block
+    //   }
+    // }
 
     fromBlock = fromBlock || nextBlockNo || Number(currentBlockNo.toString());
     toBlock = toBlock || Number(currentBlockNo.toString());
+    if (toBlock - fromBlock > 500) { toBlock = fromBlock + 500; } // Limit to 500 blocks per scan
     const chunkBlockRanges = chunkArray(fromBlock, toBlock, network.scan_range_no);
     const topics = await this.eventService.getTopicsByChainId(chainId);
     if (topics.length === 0) { return };
@@ -132,14 +132,12 @@ export class ProcessedBlockService {
               latestProcessBlock.id,
               {
                 block_no: blockRange[1],
-                block_hash: currentBlock.hash?.toLowerCase(),
               }
             );
           } else {
             await queryRunner.manager.create(ProcessedBlockEntity, {
               chain_id: chainId,
               block_no: blockRange[1],
-              block_hash: currentBlock.hash?.toLowerCase(),
             }).save();
           }
         }
@@ -151,7 +149,6 @@ export class ProcessedBlockService {
         break;
       }
     }
-
     await queryRunner.release();
   }
 
