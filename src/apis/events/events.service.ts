@@ -37,7 +37,7 @@ export class EventsService {
         }
         return;
       }
-
+      console.log(`Registering event: ${createEventDto.name}, chain id: ${createEventDto.chain_id}, service: ${createEventDto.service_name}`);
       event = EventEntity.create({
         event_topic: eventTopic,
         abi_inputs_hash: inputsHash,

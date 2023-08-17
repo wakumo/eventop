@@ -10,7 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { configuration } from '../src/config/config.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseTestConfigService } from '../src/config/database_test.config.js';
-import { contractEvents } from "../src/scripts/seeds/events/events.js";
+import { contractEvents } from "../src/scripts/seeds/dev/events/events.js";
 import { getTopicFromEvent } from "../src/commons/utils/blockchain.js";
 
 export async function getSynchronizeConnection() {

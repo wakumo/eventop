@@ -1,6 +1,12 @@
-import { Command, CommandRunner } from 'nest-commander';
+import {
+  Command,
+  CommandRunner,
+  Option,
+} from 'nest-commander';
 import { EventsService } from '../../apis/events/events.service.js';
-import { contractEvents } from './events/events.js';
+import { contractEvents as contractEventsDev } from './dev/events/events.js';
+import { contractEvents as contractEventsProd } from './prod/events/events.js';
+import { Env } from '../../commons/enums/index.js';
 
 @Command({ name: 'seed:events', description: 'Register contract events' })
 export class EventSeed extends CommandRunner {
@@ -8,11 +14,13 @@ export class EventSeed extends CommandRunner {
     super();
   }
 
-  async run(): Promise<void> {
+  async run(_: string[], options?: { env: Env }): Promise<void> {
+    const { env } = options;
+    console.log(`Seeding events for environment ${env}...`);
+    const contractEvents = env === Env.DEV ? contractEventsDev : contractEventsProd;
+
     for (const event of contractEvents) {
       for (const chainId of event.chain_ids) {
-        console.log(`Registering event: ${event.name}, chain id: ${chainId}`);
-
         let contractAddresses = [];
         if (event.contract_addresses) {
           contractAddresses = event.contract_addresses.map(contract => {
@@ -30,5 +38,15 @@ export class EventSeed extends CommandRunner {
         });
       }
     }
+  }
+
+  @Option({
+    flags: '-e, --env [string]',
+    description: 'Environment to seed events',
+    required: true,
+  })
+  checkEnvironment(val: string): Env {
+    if (!Object.values(Env).includes(val.toLowerCase() as Env)) throw new Error("Invalid environment. Must be one of dev, prod");
+    return val.toLowerCase() as Env;
   }
 }
