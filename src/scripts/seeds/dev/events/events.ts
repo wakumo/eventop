@@ -50,18 +50,6 @@ export const contractEvents = [
     "chain_ids": [97, 80001]
   },
   {
-    "service_name": "sns",
-    "name": "Transfer(address,address,uint256)", // ERC721 transfer
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256"}], "name": "Transfer", "type": "event"}',
-    "chain_ids": [97, 80001]
-  },
-  {
-    "service_name": "sns",
-    "name": "TransferSingle(address,address,address,uint256,uint256)", // ERC1155 transfer
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "operator", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "id", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "TransferSingle", "type": "event" }',
-    "chain_ids": [97, 80001]
-  },
-  {
     "service_name": "sowaka_governance",
     "name": "Transfer(address,address,uint256)",
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}], "name": "Transfer", "type": "event"}',
@@ -104,9 +92,9 @@ export const contractEvents = [
   {
     "service_name": "sns",
     "routing_key": "avacuscc.events.sns.sns_community_created",
-    // event SnsCommunityCreated(address creator, string name, address community, address communityBadge, bytes32 communityId, bytes16 salt, bytes conditions);
-    "name": "SnsCommunityCreated(address,string,address,address,bytes32,bytes16,bytes)",
-    "abi": '{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"creator","type":"address"},{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":false,"internalType":"address","name":"community","type":"address"},{"indexed":false,"internalType":"address","name":"communityBadge","type":"address"},{"indexed":false,"internalType":"bytes32","name":"communityId","type":"bytes32"},{"indexed":false,"internalType":"bytes16","name":"salt","type":"bytes16"},{"indexed":false,"internalType":"bytes","name":"conditions","type":"bytes"}],"name":"SnsCommunityCreated","type":"event"}',
+    // event SnsCommunityCreated(address creator, address community, address communityBadge, bytes32 communityId, bytes16 salt, bytes conditions);
+    "name": "SnsCommunityCreated(address,address,address,bytes32,bytes16,bytes)",
+    "abi": '{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"creator","type":"address"},{"indexed":false,"internalType":"address","name":"community","type":"address"},{"indexed":false,"internalType":"address","name":"communityBadge","type":"address"},{"indexed":false,"internalType":"bytes32","name":"communityId","type":"bytes32"},{"indexed":false,"internalType":"bytes16","name":"salt","type":"bytes16"},{"indexed":false,"internalType":"bytes","name":"conditions","type":"bytes"}],"name":"SnsCommunityCreated","type":"event"}',
     "chain_ids": [80001, 97],
   },
   {
