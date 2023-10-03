@@ -9,5 +9,6 @@ export const client = new Client({
   user: process.env.DB_USER || "root",
   host: process.env.DB_HOST || "local_postgres_user",
   database: "postgres",
+  port: Number(process.env.DB_PORT),
   password: process.env.DB_PASSWORD || ""
 });
