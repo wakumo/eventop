@@ -4,6 +4,7 @@ import { EventEntity } from '../../entities/index.js';
 import { DataSource } from 'typeorm';
 import { CreateEventDto } from './dto/create-event.dto';
 import { ChainTopicsInterface } from 'src/commons/interfaces/chain_topics.interface.js';
+import _ from 'lodash';
 
 @Injectable()
 export class EventsService {
@@ -60,10 +61,9 @@ export class EventsService {
         .groupBy('event.chain_id')
         .getRawOne<ChainTopicsInterface>();
 
-      if (!result) {
-        return [];
-      }
-      return result.topics;
+      if (!result) { return []; }
+
+      return _.uniq(result.topics);
     } catch (error) {
       console.log(error);
     }
