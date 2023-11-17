@@ -9,6 +9,7 @@ import { initClient } from '../../commons/utils/blockchain.js';
 import {
   chunkArray,
   chunkArrayReturnHex,
+  sleep,
 } from '../../commons/utils/index.js';
 import {
   EventEntity,
@@ -18,9 +19,19 @@ import {
 import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
+import { Web3Client } from '../../commons/utils/web3-client.js';
+import { Web3RateLimitExceededException } from '../../commons/exceptions/index.js';
+import { SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
+
+export interface ScanResult {
+  success: boolean;
+  longSleep: boolean;
+  error?: any;
+}
 
 @Injectable()
 export class ProcessedBlockService {
+  private web3Client: Web3Client;
 
   constructor(
     private connection: DataSource,
@@ -30,7 +41,10 @@ export class ProcessedBlockService {
     private eventMsgService: EventMessageService,
     @Inject(forwardRef(() => NetworkService))
     private networkService: NetworkService,
-  ) {}
+
+  ) {
+    this.web3Client = new Web3Client({});
+  }
 
   /**
    * Get the latest processed block for a given chainId.
@@ -38,7 +52,7 @@ export class ProcessedBlockService {
    * @param {number} chainId - The ID of the blockchain network.
    * @returns {Promise<ProcessedBlockEntity | undefined>} - The latest processed block entity.
    */
-  async latestProccessedBlockBy(chainId: number) {
+  async latestProccessedBlockBy(chainId: number): Promise<ProcessedBlockEntity | undefined> {
     return await ProcessedBlockEntity.findOne({
       where: {
         chain_id: chainId
@@ -63,7 +77,7 @@ export class ProcessedBlockService {
    * @param {number} chainId - The ID of the blockchain network.
    * @returns {Promise<number | null>} - The next block number.
    */
-  private async _getNextBlockNo(chainId: number) {
+  private async _getNextBlockNo(chainId: number): Promise<number | null> {
     const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
     return latestProcessBlock ? latestProcessBlock.block_no + 1 : null;
   }
@@ -81,12 +95,19 @@ export class ProcessedBlockService {
     fromBlock?: number,
     toBlock?: number,
     ignoreUpdate = false
-  ) {
-    let network = await this._validateNetwork(chainId);
-    if (network.is_stop_scan) {
-      console.info(`Pause the scan on the ${network.chain_id} network`);
-      return;
+  ) : Promise<ScanResult> {
+    let network: NetworkEntity;
+    try {
+      network = await this._validateNetwork(chainId);
+      if (network.is_stop_scan) {
+        console.info(`Pause the scan on the ${network.chain_id} network`);
+        return { success: false, longSleep: false };
+      }
+    } catch (error) {
+      console.error(error);
+      return { success: false, longSleep: true };
     }
+
 
     const nextBlockNo = await this._getNextBlockNo(chainId);
     const client = initClient(network.http_url);
@@ -95,7 +116,7 @@ export class ProcessedBlockService {
 
     if (!currentBlock) {
       console.error(`Can't fetch current block on the ${network.chain_id} network`);
-      return;
+      return { success: false, longSleep: false };
     }
 
     fromBlock = fromBlock || nextBlockNo || Number(currentBlockNo.toString());
@@ -107,7 +128,7 @@ export class ProcessedBlockService {
 
     if (topics.length === 0) {
       console.info(`Event topic not found on ${network.chain_id} network`);
-      return
+      return { success: true, longSleep: false };
     };
 
     const registedEvents = await this.eventService.getEventsByChain(chainId);
@@ -126,8 +147,17 @@ export class ProcessedBlockService {
           registedEvents,
           ignoreUpdate
         );
+        await await sleep(1 * SECONDS_TO_MILLISECONDS);
       }
-    } finally {
+
+      return { success: true, longSleep: false };
+    } catch (error) {
+      const isSuccess = false;
+      const longSleep = (error instanceof Web3RateLimitExceededException) ? true : false;
+
+      return { success: isSuccess, longSleep: longSleep };
+    }
+    finally {
       await queryRunner.release();
     }
   }
@@ -156,7 +186,7 @@ export class ProcessedBlockService {
 
     try {
       console.info(
-        `[ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`
+        `${new Date()} [ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`
       );
 
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
@@ -260,11 +290,13 @@ export class ProcessedBlockService {
     toBlockHex: number,
     topics: string[],
   ) {
-    return await client.eth.getPastLogs({
+    const getLogsPromise = client.eth.getPastLogs({
       fromBlock: fromBlockHex,
       toBlock: toBlockHex,
       topics: [topics],
     });
+
+    return await this.web3Client.call(getLogsPromise);
   }
 
   async scanEventByTopics(

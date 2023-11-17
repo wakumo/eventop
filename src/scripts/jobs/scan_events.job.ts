@@ -20,19 +20,12 @@ export class ScanEvents extends CommandRunner {
 
   async run(
     _: string[],
-    {
-      chain_id: chainId,
-      from_block: fromBlock,
-      to_block: toBlock
-    }: ScanOptions
+    options: ScanOptions
   ): Promise<void> {
-    if (!!fromBlock === true || !!toBlock === true) {
-      await this.blockService.scanBlockEvents(chainId, fromBlock, toBlock, true);
-    } else {
-      while (true) {
-        await this.blockService.scanBlockEvents(chainId);
-        await sleep(3 * SECONDS_TO_MILLISECONDS);
-      }
+    while (true) {
+      const scanResult = await this.blockService.scanBlockEvents(options.chain_id);
+      const sleepTime = (scanResult.longSleep) ? 60 : 3;
+      await sleep(sleepTime * SECONDS_TO_MILLISECONDS);
     }
   }
 
