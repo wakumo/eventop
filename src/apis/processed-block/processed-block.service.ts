@@ -194,6 +194,7 @@ export class ProcessedBlockService {
 
       if (eventMessages.length !== 0) {
         await queryRunner.manager.save(eventMessages, { chunk: 200 });
+        console.info(`Saved ${eventMessages.length} event messages`)
       }
 
       await this._updateProcessedBlock(queryRunner, ignoreUpdate, blockRange, chainId);

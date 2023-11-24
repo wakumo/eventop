@@ -83,7 +83,5 @@ describe('EventMessageService', () => {
       },
       undefined
     );
-    // Delete after sent
-    expect(eventMsgAfterSend).toBe(null);
   })
 });

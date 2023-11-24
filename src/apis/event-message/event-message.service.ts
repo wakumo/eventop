@@ -1,7 +1,7 @@
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { Injectable } from '@nestjs/common';
 import { LogData } from '../../commons/interfaces/index.js';
-import { DataSource, In, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
 import { EventEntity } from '../../entities/event.entity.js';
 import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
@@ -13,22 +13,6 @@ export class EventMessageService {
     private connection: DataSource,
     private readonly producer: EventMqProducer
   ) { }
-
-  // async findEventMessage(
-  //   eventId: number,
-  //   transactionId: string,
-  //   logIndex: number,
-  // ) {
-  //   const message = await EventMessageEntity.createQueryBuilder(
-  //     'event_messages',
-  //   )
-  //     .where('event_messages.event_id = :eventId', { eventId: eventId })
-  //     .andWhere('event_messages.tx_id = :txId', { txId: transactionId })
-  //     .andWhere('event_messages.log_index = :logIndex', { logIndex: logIndex })
-  //     .getOne();
-
-  //   return message;
-  // }
 
   createEventMessage(
     event: EventEntity,
@@ -108,7 +92,10 @@ export class EventMessageService {
         // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
       }
-      await queryRunner.manager.delete(EventMessageEntity, pendingMessages);
+      const deliveredMessages = pendingMessages.map((message) => { message.status = EventMessageStatus.DELIVERED; return message; });
+      await queryRunner.manager.save(deliveredMessages);
+
+      await this._deleteOldDeliveredMessage(queryRunner);
       console.log(`${new Date()}Finished send pending messages`);
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
@@ -117,6 +104,24 @@ export class EventMessageService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * Delete old delivered event messages that are more than one hour old.
+   *
+   * @param {QueryRunner} queryRunner - The TypeORM query runner.
+   * @returns {Promise<void>} - A promise that resolves once the old messages are deleted.
+   */
+  private async _deleteOldDeliveredMessage(queryRunner: QueryRunner): Promise<void> {
+    const currentTime = new Date();
+    const oneHourAgo = new Date(currentTime.getTime() - (60 * 60 * 1000));
+
+    // Delete old delivered event messages from the database
+    await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
+      .where('event_messages.status = :status', { status: EventMessageStatus.DELIVERED })
+      .andWhere('event_messages.updated_at < :oneHourAgo', { oneHourAgo })
+      .delete()
+      .execute();
   }
 
   async deleteDeliveredMessage(): Promise<void> {
