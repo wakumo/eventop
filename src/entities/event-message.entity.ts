@@ -15,9 +15,7 @@ import {
 import { EventEntity } from './index.js';
 
 @Entity('event_messages')
-// @Index('idx_event_messages_uniq_msg', ['event_id', 'tx_id', 'log_index'], {
-//   unique: true,
-// })
+@Index('idx_event_messages_delivered_msges', ['status', 'updated_at'])
 export class EventMessageEntity extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id: number;
@@ -37,6 +35,7 @@ export class EventMessageEntity extends BaseEntity {
   @Column({ type: 'bigint' })
   event_id: number;
 
+  @Index('idx_event_messages_on_block_no')
   @Column({ type: 'bigint' })
   block_no: number;
 

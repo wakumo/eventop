@@ -92,10 +92,8 @@ export class EventMessageService {
         // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
       }
-      const deliveredMessages = pendingMessages.map((message) => { message.status = EventMessageStatus.DELIVERED; return message; });
-      await queryRunner.manager.save(deliveredMessages);
+      await this._updateStatusToDelivered(queryRunner, pendingMessages);
 
-      await this._deleteOldDeliveredMessage(queryRunner);
       console.log(`${new Date()}Finished send pending messages`);
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
@@ -104,6 +102,16 @@ export class EventMessageService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async _updateStatusToDelivered(queryRunner: QueryRunner, pendingMessages: EventMessageEntity[]) {
+    if (pendingMessages.length === 0) { return; }
+
+    await queryRunner.manager.createQueryBuilder()
+      .update(EventMessageEntity)
+      .set({ status: EventMessageStatus.DELIVERED })
+      .whereInIds(pendingMessages.map((message) => message.id))
+      .execute();
   }
 
   /**

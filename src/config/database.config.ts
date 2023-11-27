@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { LoggerOptions } from "typeorm";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +21,7 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
       database: this.configService.get('db.name'),
       password: this.configService.get('db.password'),
       entities: [path.join(__dirname, '../**/*.entity{.ts,.js}')],
-      logging: ['warn', 'error', 'migration'],
+      logging: this.configService.get<LoggerOptions>("db.logger_options"),
     };
   }
 }
