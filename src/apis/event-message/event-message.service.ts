@@ -1,7 +1,7 @@
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { Injectable } from '@nestjs/common';
 import { LogData } from '../../commons/interfaces/index.js';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, DeleteResult, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
 import { EventEntity } from '../../entities/event.entity.js';
 import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
@@ -132,26 +132,27 @@ export class EventMessageService {
       .execute();
   }
 
+  /**
+   * Deletes delivered EventMessageEntity records that are older than two days.
+   */
   async deleteDeliveredMessage(): Promise<void> {
-    let queryRunner: QueryRunner;
-    queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
-
     try {
-      await queryRunner.startTransaction();
+      const currentTime = new Date();
+      const twoDaysAgo = new Date(currentTime.getTime() - (2 * 24 * 60 * 60 * 1000));
 
-      // Delete all delivered event messsages
-      // which are delivered to RabbitMq
-      await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
-        .where('event_messages.status = :status', { status: EventMessageStatus.DELIVERED })
+      const deleteResult: DeleteResult = await EventMessageEntity.createQueryBuilder('event_messages')
+        .where('event_messages.status = :status', {
+          status: EventMessageStatus.DELIVERED,
+        })
+        .andWhere('event_messages.updated_at <= :twoDaysAgo', {
+          twoDaysAgo: twoDaysAgo,
+        })
         .delete()
         .execute();
-      await queryRunner.commitTransaction();
+
+      console.info(`${new Date()} - ${deleteResult.affected} records deleted.`);
     } catch (error) {
       console.error(error);
-      await queryRunner.rollbackTransaction();
-    } finally {
-      await queryRunner.release();
     }
   }
 }

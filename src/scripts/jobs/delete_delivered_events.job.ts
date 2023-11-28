@@ -14,6 +14,7 @@ export class DeleteDeliveredMessages extends CommandRunner {
   }
 
   async run(): Promise<void> {
+    console.info(`${new Date()} Starting delete delivered messages job`);
     await this.messageService.deleteDeliveredMessage();
   }
 }
