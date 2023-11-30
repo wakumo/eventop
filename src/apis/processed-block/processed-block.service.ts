@@ -24,7 +24,6 @@ import { Web3RateLimitExceededException } from '../../commons/exceptions/index.j
 import { SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
 
 export interface ScanResult {
-  success: boolean;
   longSleep: boolean;
   error?: any;
 }
@@ -66,78 +65,63 @@ export class ProcessedBlockService {
     if (!network) {
       throw `Invalid network: ${chainId}`;
     }
-    network = await this.networkService.validateAvailableNodes(network);
+    network = await this.networkService.pickAndUpdateAvailableNode(network);
 
     return network;
   }
 
   /**
-   * Get the next block number for a given chainId.
+   * Get the from block number need to scan from DB for a given chainId.
    *
    * @param {number} chainId - The ID of the blockchain network.
    * @returns {Promise<number | null>} - The next block number.
    */
-  private async _getNextBlockNo(chainId: number): Promise<number | null> {
+  private async _getNextBlockNoFromDB(chainId: number): Promise<number | null> {
     const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
     return latestProcessBlock ? latestProcessBlock.block_no + 1 : null;
   }
 
   /**
-   * Scan blockchain events for a given chainId within a specified block range.
+   * Get the block range for scanning coin transfers.
    *
+   * @param {Web3} client - The Web3 client instance.
    * @param {number} chainId - The ID of the blockchain network.
-   * @param {number} fromBlock - The starting block number.
-   * @param {number} toBlock - The ending block number.
-   * @param {boolean} ignoreUpdate - Flag to ignore block updates.
+   * @returns {Promise<number[]>} - An array containing the starting and ending block numbers.
    */
-  async scanBlockEvents(
+  private async _getBlockRange(
+    client: Web3,
     chainId: number,
-    fromBlock?: number,
-    toBlock?: number,
-    ignoreUpdate = false
-  ) : Promise<ScanResult> {
-    let network: NetworkEntity;
-    try {
-      network = await this._validateNetwork(chainId);
-      if (network.is_stop_scan) {
-        console.info(`Pause the scan on the ${network.chain_id} network`);
-        return { success: false, longSleep: false };
-      }
-    } catch (error) {
-      console.error(error);
-      return { success: false, longSleep: true };
-    }
-
-
-    const nextBlockNo = await this._getNextBlockNo(chainId);
-    const client = initClient(network.http_url);
+  ): Promise<number[]> {
+    // Get the next block number to scan from the database
+    const nextBlockNo = await this._getNextBlockNoFromDB(chainId);
+    // Get the current block number from the blockchain
     const currentBlockNo = await client.eth.getBlockNumber();
-    const currentBlock = await client.eth.getBlock(currentBlockNo, false);
 
-    if (!currentBlock) {
-      console.error(`Can't fetch current block on the ${network.chain_id} network`);
-      return { success: false, longSleep: false };
-    }
+    // Calculate the starting block number based on the next block or current block
+    let fromBlock = nextBlockNo || Number(currentBlockNo.toString());
+    // Calculate the ending block number, limiting the range to 500 blocks
+    let toBlock = Number(currentBlockNo.toString());
+    toBlock = Math.min(fromBlock + 500, toBlock);
 
-    fromBlock = fromBlock || nextBlockNo || Number(currentBlockNo.toString());
-    toBlock = toBlock || Number(currentBlockNo.toString());
+    return [fromBlock, toBlock];
+  }
 
-    if (toBlock - fromBlock > 500) { toBlock = fromBlock + 500; } // Limit to 500 blocks per scan
-    const chunkBlockRanges = chunkArray(fromBlock, toBlock, network.scan_range_no);
-    const topics = await this.eventService.getTopicsByChainId(chainId);
-
-    if (topics.length === 0) {
-      console.info(`Event topic not found on ${network.chain_id} network`);
-      return { success: true, longSleep: false };
-    };
-
+  private async _scanBlockEvents(
+    nodeUrl: string,
+    chainId: number,
+    topics: string[],
+    scanRangeNo: number,
+  ) {
+    const client = initClient(nodeUrl);
+    const [fromBlock, toBlock] = await this._getBlockRange(client, chainId);
+    const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
     const registedEvents = await this.eventService.getEventsByChain(chainId);
 
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
     try {
-      for (const blockRange of chunkBlockRanges) {
+      for (const blockRange of blockRangeChunks) {
         await this._processBlockRange(
           queryRunner,
           chainId,
@@ -145,20 +129,43 @@ export class ProcessedBlockService {
           blockRange,
           topics,
           registedEvents,
-          ignoreUpdate
         );
         await await sleep(1 * SECONDS_TO_MILLISECONDS);
       }
-
-      return { success: true, longSleep: false };
+      return { longSleep: false }
     } catch (error) {
-      const isSuccess = false;
-      const longSleep = (error instanceof Web3RateLimitExceededException) ? true : false;
-
-      return { success: isSuccess, longSleep: longSleep };
-    }
-    finally {
+      throw error;
+    } finally {
       await queryRunner.release();
+    }
+  }
+
+  /**
+   * Scan blockchain events for a given chainId within a specified block range.
+   *
+   * @param {number} chainId - The ID of the blockchain network.
+   */
+  async scanBlockEvents(chainId: number) : Promise<ScanResult> {
+    try {
+      const network = await this._validateNetwork(chainId);
+      if (network.is_stop_scan) {
+        console.info(`Pause the scan on the ${network.chain_id} network`);
+        return { longSleep: false };
+      }
+
+      const topics = await this.eventService.getTopicsByChainId(chainId);
+      if (topics.length === 0) {
+        console.info(`Event topic not found on ${network.chain_id} network`);
+        return { longSleep: false };
+      };
+
+      const scanResult = await this._scanBlockEvents(network.http_url, chainId, topics, network.scan_range_no);
+
+      return scanResult;
+    } catch (error) {
+      console.error(error);
+      const isLongSleep = error instanceof(Web3RateLimitExceededException);
+      return { longSleep: isLongSleep };
     }
   }
 
@@ -171,7 +178,6 @@ export class ProcessedBlockService {
    * @param {number[]} blockRange - The range of blocks to process.
    * @param {string[]} topics - The topics to filter events.
    * @param {EventEntity[]} registedEvents - The registered events for the chain.
-   * @param {boolean} ignoreUpdate - Flag to ignore block updates.
    */
   private async _processBlockRange(
     queryRunner: QueryRunner,
@@ -180,7 +186,6 @@ export class ProcessedBlockService {
     blockRange: number[],
     topics: string[] = [],
     registedEvents: EventEntity[],
-    ignoreUpdate: boolean
   ) {
     await queryRunner.startTransaction();
 
@@ -197,12 +202,11 @@ export class ProcessedBlockService {
         console.info(`Saved ${eventMessages.length} event messages`)
       }
 
-      await this._updateProcessedBlock(queryRunner, ignoreUpdate, blockRange, chainId);
+      await this._updateProcessedBlock(queryRunner, blockRange, chainId);
 
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      console.error(error);
       throw error; // Rethrow the error to stop further processing
     }
   }
@@ -246,14 +250,9 @@ export class ProcessedBlockService {
    */
   private async _updateProcessedBlock(
     queryRunner: QueryRunner,
-    ignoreUpdate: boolean,
     blockRange: number[],
     chainId: number
   ) {
-    if (ignoreUpdate) {
-      return;
-    }
-
     const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
     const updateParams = { block_no: blockRange[1] };
 

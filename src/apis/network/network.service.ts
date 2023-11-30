@@ -12,9 +12,8 @@ export class NetworkService {
   // So we use getPastLogs to check if the node is available
   // @param: url: string
   private async isAvailableNode(url: string) {
-    let client = initClient(url);
-
     try {
+      let client = initClient(url);
       await client.eth.getPastLogs({
         fromBlock: 'latest',
         toBlock: 'latest',
@@ -29,31 +28,29 @@ export class NetworkService {
     return { url: url, isAvailable: false };
   }
 
-  async validateAvailableNodes(network: NetworkEntity): Promise<NetworkEntity> {
-    try {
-      // Return current network if main node is available
+  async pickAndUpdateAvailableNode(network: NetworkEntity): Promise<NetworkEntity> {
+    // Return current network if main node is available
+    if (network.http_url) {
       const nodeStatus = await this.isAvailableNode(network.http_url);
       if (nodeStatus.isAvailable) { return network; }
+    }
 
-      // Update new available node url if current main node is not available
-      let nodeCheckPromises = [];
-      for (let nodeUrl of network.node_urls) {
-        nodeCheckPromises.push(this.isAvailableNode(nodeUrl));
-      }
-      const nodeStatuses = await Promise.all(nodeCheckPromises);
-      const availableNodes = nodeStatuses.filter((node) => node.isAvailable);
+    // Update new available node url if current main node is not available
+    let nodeCheckPromises = [];
+    for (let nodeUrl of network.node_urls) {
+      nodeCheckPromises.push(this.isAvailableNode(nodeUrl));
+    }
+    const nodeStatuses = await Promise.all(nodeCheckPromises);
+    const availableNodes = nodeStatuses.filter((node) => node.isAvailable);
 
-      if (availableNodes.length > 0) {
-        const randomNodeIndex = Math.floor(Math.random() * availableNodes.length);
-        network.http_url = availableNodes[randomNodeIndex].url;
-        network = await NetworkEntity.save(network);
+    if (availableNodes.length > 0) {
+      const randomNodeIndex = Math.floor(Math.random() * availableNodes.length);
+      network.http_url = availableNodes[randomNodeIndex].url;
+      network = await NetworkEntity.save(network);
 
-        return network;
-      } else {
-        throw new NoAvailableNodeException();
-      }
-    } catch (ex) {
-      console.error(ex);
+      return network;
+    } else {
+      throw new NoAvailableNodeException();
     }
   }
 }

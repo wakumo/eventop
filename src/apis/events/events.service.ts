@@ -70,14 +70,10 @@ export class EventsService {
   }
 
   async getEventsByChain(chainId: number) {
-    try {
-      const events = await EventEntity.createQueryBuilder('event')
-        .where('event.chain_id = :chainId', { chainId: chainId })
-        .getMany();
+    const events = await EventEntity.createQueryBuilder('event')
+      .where('event.chain_id = :chainId', { chainId: chainId })
+      .getMany();
 
-      return events;
-    } catch (error) {
-      console.log(error);
-    }
+    return events;
   }
 }

@@ -43,7 +43,7 @@ describe('ProcessedBlockService', () => {
     service = module.get<ProcessedBlockService>(ProcessedBlockService);
     await EventEntity.create({ ...communityCreatedPayload }).save();
     await EventEntity.create({ ...airdropCreatedPayload }).save();
-    await NetworkEntity.create({ chain_id: 97 }).save();
+    await NetworkEntity.create({ chain_id: 97, http_url: 'https://rpc.ankr.com/bsc_testnet_chapel' }).save();
     await ProcessedBlockEntity.create({
       chain_id: 97,
       block_no: 24639370,
