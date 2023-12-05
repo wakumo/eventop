@@ -16,13 +16,24 @@ export class EventsService {
     try {
       const eventTopic = getTopicFromEvent(createEventDto.name);
       let event: EventEntity;
-      event = await EventEntity.findOne({
-        where: {
-          chain_id: createEventDto.chain_id,
-          event_topic: eventTopic,
-          service_name: createEventDto.service_name,
-        },
-      });
+
+      if (createEventDto.routing_key) {
+        event = await EventEntity.findOne({
+          where: {
+            chain_id: createEventDto.chain_id,
+            routing_key: createEventDto.routing_key,
+            service_name: createEventDto.service_name,
+          },
+        });
+      } else {
+        event = await EventEntity.findOne({
+          where: {
+            chain_id: createEventDto.chain_id,
+            event_topic: eventTopic,
+            service_name: createEventDto.service_name,
+          },
+        });
+      }
 
       // Two Transfered events can have same function signature (event_topic)
       // But ABI can be different due to indexes factor
@@ -38,7 +49,7 @@ export class EventsService {
         }
         return;
       }
-      console.log(`Registering event: ${createEventDto.name}, chain id: ${createEventDto.chain_id}, service: ${createEventDto.service_name}`);
+      console.log(`Registering event: ${createEventDto.name}, chain id: ${createEventDto.chain_id}, service: ${createEventDto.service_name}, routing key: ${createEventDto.routing_key}`);
       event = EventEntity.create({
         event_topic: eventTopic,
         abi_inputs_hash: inputsHash,
