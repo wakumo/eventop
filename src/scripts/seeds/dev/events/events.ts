@@ -155,4 +155,11 @@ export const contractEvents = [
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Approval", "type": "event" }`,
     "chain_ids": [80001, 97],
   },
+  {
+    "service_name": "wallet-activity",
+    "routing_key": "avacuscc.events.wallet-activity.uniswap_v3_swap",
+    "name": "Swap(address,address,int256,int256,uint160,uint128,int24)", // event Swap( address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick);
+    "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": true, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "int256", "name": "amount0", "type": "int256" }, { "indexed": false, "internalType": "int256", "name": "amount1", "type": "int256" }, { "indexed": false, "internalType": "uint160", "name": "sqrtPriceX96", "type": "uint160" }, { "indexed": false, "internalType": "uint128", "name": "liquidity", "type": "uint128" }, { "indexed": false, "internalType": "int24", "name": "tick", "type": "int24" } ], "name": "Swap", "type": "event" }`,
+    "chain_ids": [80001, 97],
+  },
 ]
