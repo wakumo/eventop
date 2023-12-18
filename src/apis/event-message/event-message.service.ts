@@ -92,7 +92,7 @@ export class EventMessageService {
         // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
       }
-      await this._updateStatusToDelivered(queryRunner, pendingMessages);
+      await this._deleteDeliveredMessage(queryRunner, pendingMessages);
 
       console.log(`${new Date()}Finished send pending messages`);
     } catch (ex) {
@@ -104,13 +104,12 @@ export class EventMessageService {
     }
   }
 
-  private async _updateStatusToDelivered(queryRunner: QueryRunner, pendingMessages: EventMessageEntity[]) {
+  private async _deleteDeliveredMessage(queryRunner: QueryRunner, pendingMessages: EventMessageEntity[]) {
     if (pendingMessages.length === 0) { return; }
 
-    await queryRunner.manager.createQueryBuilder()
-      .update(EventMessageEntity)
-      .set({ status: EventMessageStatus.DELIVERED })
+    await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
       .whereInIds(pendingMessages.map((message) => message.id))
+      .delete()
       .execute();
   }
 
@@ -130,29 +129,5 @@ export class EventMessageService {
       .andWhere('event_messages.updated_at < :oneHourAgo', { oneHourAgo })
       .delete()
       .execute();
-  }
-
-  /**
-   * Deletes delivered EventMessageEntity records that are older than two days.
-   */
-  async deleteDeliveredMessage(): Promise<void> {
-    try {
-      const currentTime = new Date();
-      const twoDaysAgo = new Date(currentTime.getTime() - (2 * 24 * 60 * 60 * 1000));
-
-      const deleteResult: DeleteResult = await EventMessageEntity.createQueryBuilder('event_messages')
-        .where('event_messages.status = :status', {
-          status: EventMessageStatus.DELIVERED,
-        })
-        .andWhere('event_messages.updated_at <= :twoDaysAgo', {
-          twoDaysAgo: twoDaysAgo,
-        })
-        .delete()
-        .execute();
-
-      console.info(`${new Date()} - ${deleteResult.affected} records deleted.`);
-    } catch (error) {
-      console.error(error);
-    }
   }
 }
