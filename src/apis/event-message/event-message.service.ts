@@ -114,20 +114,26 @@ export class EventMessageService {
   }
 
   /**
-   * Delete old delivered event messages that are more than one hour old.
-   *
-   * @param {QueryRunner} queryRunner - The TypeORM query runner.
-   * @returns {Promise<void>} - A promise that resolves once the old messages are deleted.
+   * Deletes delivered EventMessageEntity records that are older than two days.
    */
-  private async _deleteOldDeliveredMessage(queryRunner: QueryRunner): Promise<void> {
-    const currentTime = new Date();
-    const oneHourAgo = new Date(currentTime.getTime() - (60 * 60 * 1000));
+  async deleteDeliveredMessage(): Promise<void> {
+    try {
+      const currentTime = new Date();
+      const twoDaysAgo = new Date(currentTime.getTime() - (2 * 24 * 60 * 60 * 1000));
 
-    // Delete old delivered event messages from the database
-    await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
-      .where('event_messages.status = :status', { status: EventMessageStatus.DELIVERED })
-      .andWhere('event_messages.updated_at < :oneHourAgo', { oneHourAgo })
-      .delete()
-      .execute();
+      const deleteResult: DeleteResult = await EventMessageEntity.createQueryBuilder('event_messages')
+        .where('event_messages.status = :status', {
+          status: EventMessageStatus.DELIVERED,
+        })
+        .andWhere('event_messages.updated_at <= :twoDaysAgo', {
+          twoDaysAgo: twoDaysAgo,
+        })
+        .delete()
+        .execute();
+
+      console.info(`${new Date()} - ${deleteResult.affected} records deleted.`);
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
