@@ -118,41 +118,41 @@ export const contractEvents = [
     "routing_key": "avacuscc.events.wallet-activity.uniswap_swap_v3",
     "name": "Swap(address,address,int256,int256,uint160,uint128,int24)", // event Swap( address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick );
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": true, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "int256", "name": "amount0", "type": "int256" }, { "indexed": false, "internalType": "int256", "name": "amount1", "type": "int256" }, { "indexed": false, "internalType": "uint160", "name": "sqrtPriceX96", "type": "uint160" }, { "indexed": false, "internalType": "uint128", "name": "liquidity", "type": "uint128" }, { "indexed": false, "internalType": "int24", "name": "tick", "type": "int24" } ], "name": "Swap", "type": "event" }`,
-    "chain_ids": [80001, 97],
+    "chain_ids": [80001, 97, 56],
   },
   {
     "service_name": "wallet-activity",
     "routing_key": "avacuscc.events.wallet-activity.erc1155_transfer_single",
     "name": "TransferSingle(address,address,address,uint256,uint256)", // event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "operator", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "id", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "TransferSingle", "type": "event" }`,
-    "chain_ids": [80001, 97],
+    "chain_ids": [80001, 97, 56],
   },
   {
     "service_name": "wallet-activity",
     "routing_key": "avacuscc.events.wallet-activity.erc721_transfer",
     "name": "Transfer(address,address,uint256)", // event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" } ], "name": "Transfer", "type": "event" }`,
-    "chain_ids": [80001, 97],
+    "chain_ids": [80001, 97, 56],
   },
   {
     "service_name": "wallet-activity",
     "routing_key": "avacuscc.events.wallet-activity.erc721_approval",
     "name": "Approval(address,address,uint256)", // event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "approved", "type": "address" }, { "indexed": true, "internalType": "uint256", "name": "tokenId", "type": "uint256" } ], "name": "Approval", "type": "event" }`,
-    "chain_ids": [80001, 97],
+    "chain_ids": [80001, 97, 56],
   },
   {
     "service_name": "wallet-activity",
     "routing_key": "avacuscc.events.wallet-activity.erc20_transfer",
     "name": "Transfer(address,address,uint256)", // event Transfer(address indexed from, address indexed to, uint256 value);
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Transfer", "type": "event" }`,
-    "chain_ids": [80001, 97],
+    "chain_ids": [80001, 97, 56],
   },
   {
     "service_name": "wallet-activity",
     "routing_key": "avacuscc.events.wallet-activity.erc20_approval",
     "name": "Approval(address,address,uint256)", // event Approval(address indexed owner, address indexed spender, uint256 value);
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Approval", "type": "event" }`,
-    "chain_ids": [80001, 97],
+    "chain_ids": [80001, 97, 56],
   },
 ]
