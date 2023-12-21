@@ -43,7 +43,8 @@ pipeline {
               
               sh './kubectl apply -f .kube/development/events-mq-deployment.yml'
               sh './kubectl rollout restart deployment/events-mq-deployment'
-
+              
+              sh './kubectl apply -f .kube/development/events-mq-job.yml'
               sh './kubectl delete -f .kube/development/events-mq-job.yml'
               sh './kubectl apply -f .kube/development/events-mq-job.yml'
             }
