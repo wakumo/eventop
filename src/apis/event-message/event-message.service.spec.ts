@@ -79,6 +79,7 @@ describe('EventMessageService', () => {
         txId: '0x25ec682fb51dd5d753defd0cc001b9d209da4899512a5340e806d2a790e34ec9',
         logIndex: 1,
         blockNo: '10000000',
+        timestamp: null,
         contractAddress: '0x0E1eF4b2a2f3D7eC00521648B690dC6D4f5d83ea'
       },
       undefined

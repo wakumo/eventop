@@ -1,6 +1,6 @@
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { Injectable } from '@nestjs/common';
-import { LogData } from '../../commons/interfaces/index.js';
+import { BlockTransactionData, LogData } from '../../commons/interfaces/index.js';
 import { DataSource, DeleteResult, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
 import { EventEntity } from '../../entities/event.entity.js';
@@ -17,6 +17,7 @@ export class EventMessageService {
   createEventMessage(
     event: EventEntity,
     log: string | LogData,
+    blockData: BlockTransactionData,
   ) {
     // Any https provider is fine. Just put to avoid raise warning
     // Decode no need to connect to blockchain
@@ -42,6 +43,7 @@ export class EventMessageService {
         log_index: log['logIndex'],
         block_no: log['blockNumber'],
         contract_address: log['address'],
+        timestamp: blockData.timestamp.toString(),
       });
     } catch (error) {
       throw error;
@@ -88,6 +90,7 @@ export class EventMessageService {
           logIndex: message.log_index,
           blockNo: message.block_no,
           contractAddress: message.contract_address,
+          timestamp: message.timestamp,
         }
         // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);

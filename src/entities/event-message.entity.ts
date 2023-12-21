@@ -43,6 +43,10 @@ export class EventMessageEntity extends BaseEntity {
   @Column()
   contract_address: string;
 
+  @Index()
+  @Column({ type: 'bigint', nullable: true })
+  timestamp: string;
+
   @ManyToOne(() => EventEntity, (event) => event.event_messages, {
     nullable: true,
   })

@@ -24,7 +24,7 @@ export class ScanEvents extends CommandRunner {
   ): Promise<void> {
     while (true) {
       const scanResult = await this.blockService.scanBlockEvents(options.chain_id);
-      const sleepTime = (scanResult.longSleep) ? 60 : 3;
+      const sleepTime = (scanResult.longSleep) ? 30 : 3;
       await sleep(sleepTime * SECONDS_TO_MILLISECONDS);
     }
   }

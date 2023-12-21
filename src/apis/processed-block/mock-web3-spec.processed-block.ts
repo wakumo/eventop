@@ -1,9 +1,8 @@
 import Web3 from 'web3';
 import { when } from 'jest-when';
 import {
-  pastLogs24639371_24639420,
   pastLogs24639421_24639470,
-  block_24639471_97,
+  getPastLogsResponse,
 } from '../../../test/fixtures/index.js';
 import { chunkArrayReturnHex } from '../../commons/utils/index.js';
 
@@ -27,7 +26,7 @@ for (let i = 0; i < chunks.length; i++) {
       ],
     ],
   })
-  .mockReturnValue(pastLogs24639371_24639420);
+  .mockReturnValue(getPastLogsResponse(chunks[i][0]));
 }
 
 when(fnGetPastLogs)
@@ -56,9 +55,9 @@ when(fnGetPastLogs)
   })
   .mockReturnValue([]);
 
-when(fnGetBlock)
-  .calledWith(24639471, false)
-  .mockReturnValue(block_24639471_97);
+when(fnGetBlock).calledWith(expect.any(Number)).mockImplementation((blockNo) => {
+  return { number: blockNo, timestamp: 1703134791 }
+});
 
 jest.spyOn(Web3.providers, 'HttpProvider').mockImplementation(() => null);
 jest.mock('web3-eth', () => {

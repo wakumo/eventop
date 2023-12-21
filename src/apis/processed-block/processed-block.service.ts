@@ -13,6 +13,7 @@ import {
 } from '../../commons/utils/index.js';
 import {
   EventEntity,
+  EventMessageEntity,
   NetworkEntity,
   ProcessedBlockEntity,
 } from '../../entities/index.js';
@@ -20,8 +21,9 @@ import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
 import { Web3Client } from '../../commons/utils/web3-client.js';
-import { Web3RateLimitExceededException } from '../../commons/exceptions/index.js';
+import { NoAvailableNodeException, Web3RateLimitExceededException } from '../../commons/exceptions/index.js';
 import { SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
+import { BlockTransactionData } from '../../commons/interfaces/index.js';
 
 export interface ScanResult {
   longSleep: boolean;
@@ -163,8 +165,7 @@ export class ProcessedBlockService {
 
       return scanResult;
     } catch (error) {
-      console.error(error);
-      const isLongSleep = error instanceof(Web3RateLimitExceededException);
+      const isLongSleep = error instanceof(Web3RateLimitExceededException) || error instanceof(NoAvailableNodeException);
       return { longSleep: isLongSleep };
     }
   }
@@ -195,7 +196,8 @@ export class ProcessedBlockService {
       );
 
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
-      const eventMessages = this._processLogs(logs, registedEvents, chainId);
+      const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
+      const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
 
       if (eventMessages.length !== 0) {
         await queryRunner.manager.save(eventMessages, { chunk: 200 });
@@ -219,7 +221,11 @@ export class ProcessedBlockService {
    * @param {number} chainId - The ID of the blockchain network.
    * @returns {any[]} - The event messages created from the logs.
    */
-  private _processLogs(logs: any[], registedEvents: any[], chainId: number) {
+  private _processLogs(
+    logs: any[], registedEvents: any[],
+    chainId: number,
+    blockDataMap: { [blockNo: number]: BlockTransactionData; }
+  ): EventMessageEntity[] {
     let eventMessages = [];
 
     for (const log of logs) {
@@ -229,11 +235,8 @@ export class ProcessedBlockService {
       );
 
       events.map((event) => {
-        const newMessage = this.eventMsgService.createEventMessage(event, log);
-
-        if (newMessage !== null) {
-          eventMessages.push(newMessage);
-        }
+        const newMessage = this.eventMsgService.createEventMessage(event, log, blockDataMap[log['blockNumber']]);
+        if (newMessage !== null) { eventMessages.push(newMessage); }
       });
     }
 
@@ -297,6 +300,37 @@ export class ProcessedBlockService {
     });
 
     return await this.web3Client.call(getLogsPromise);
+  }
+
+  private async _getBlock(client: Web3, blockNo: number): Promise<BlockTransactionData> {
+    const getBlockPromise = client.eth.getBlock(blockNo);
+    return await this.web3Client.call(getBlockPromise);
+  }
+
+  async getBulkBlocksData(
+    client: Web3,
+    fromBlock: number,
+    toBlock: number
+  ): Promise<{ [blockNo: number]: BlockTransactionData }> {
+    const blockDataMap: { [blockNo: number]: BlockTransactionData } = {};
+
+    const fetchBlockData = async (blockNo: number): Promise<void> => {
+      const blockInfo = await this._getBlock(client, blockNo);
+      blockDataMap[blockNo] = {
+        number: BigInt(blockInfo.number),
+        timestamp: BigInt(blockInfo.timestamp),
+      };
+    };
+
+    const fetchPromises: Promise<void>[] = [];
+
+    for (let blockNo = fromBlock; blockNo <= toBlock; blockNo++) {
+      fetchPromises.push(fetchBlockData(blockNo));
+    }
+
+    await Promise.all(fetchPromises);
+
+    return blockDataMap;
   }
 
   async scanEventByTopics(
