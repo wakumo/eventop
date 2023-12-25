@@ -31,12 +31,6 @@ export const contractEvents = [
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "bytes32", "name": "campaignId", "type": "bytes32" }, { "indexed": false, "internalType": "address", "name": "tokenFee", "type": "address" }, { "indexed": false, "internalType": "address", "name": "claimer", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "FeeClaimed", "type": "event" }',
     "chain_ids": [97, 80001]
   },
-  // {
-  //   "service_name": "balance",
-  //   "name": "Transfer(address,address,uint256)", // ERC20 transfer
-  //   "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "from", "type": "address"},{ "indexed": true, "internalType": "address", "name": "to", "type": "address"},{ "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256"}], "name": "Transfer", "type": "event"}',
-  //   "chain_ids": [1, 137, 56]
-  // },
   {
     "service_name": "sns",
     "name": "Followed(address,address)",
@@ -153,6 +147,52 @@ export const contractEvents = [
     "routing_key": "avacuscc.events.wallet-activity.erc20_approval",
     "name": "Approval(address,address,uint256)", // event Approval(address indexed owner, address indexed spender, uint256 value);
     "abi": `{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" } ], "name": "Approval", "type": "event" }`,
+    "chain_ids": [80001, 97, 56],
+  },
+  {
+    "service_name": "wallet-activity",
+    "name": "Followed(address,address)",
+    "routing_key": "avacuscc.events.wallet-activity.avacuscc_social.follow",
+    "abi": '{ "anonymous": false, "inputs": [ {"indexed": false, "internalType": "address", "name": "actor", "type": "address" }, { "indexed": false, "internalType": "address", "name": "user", "type": "address" } ], "name": "Followed", "type":"event" }',
+    "chain_ids": [97, 80001, 56]
+  },
+  {
+    "service_name": "wallet-activity",
+    "name": "UnFollowed(address,address)",
+    "routing_key": "avacuscc.events.wallet-activity.avacuscc_social.unfollow",
+    "abi": '{ "anonymous": false, "inputs": [ {"indexed": false, "internalType": "address", "name": "actor", "type": "address" }, { "indexed": false, "internalType": "address", "name": "user", "type": "address" } ], "name": "UnFollowed", "type":"event" }',
+    "chain_ids": [97, 80001, 56]
+  },
+  {
+    "service_name": "wallet-activity",
+    // event SWKStaked(address user, uint256 swkAmount, uint256 veSWKAmount, uint256 stakingPeriod, uint256 stakedAt, uint256 index, uint256 apy);
+    "name": "SWKStaked(address,uint256,uint256,uint256,uint256,uint256,uint256)",
+    "routing_key": "avacuscc.events.wallet-activity.sowaka.stake",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "swkAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "apy", "type": "uint256" } ], "name": "SWKStaked", "type": "event" }',
+    "chain_ids": [80001, 97, 56],
+  },
+  {
+    "service_name": "wallet-activity",
+    // event SWKUnstaked(address user, uint256 veSWKAmount, uint256 unstakedAt, uint256 index);
+    "name": "SWKUnstaked(address,uint256,uint256,uint256)",
+    "routing_key": "avacuscc.events.wallet-activity.sowaka.unstake",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "unstakedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" } ], "name": "SWKUnstaked", "type": "event" }',
+    "chain_ids": [80001, 97, 56],
+  },
+  {
+    "service_name": "wallet-activity",
+    // event SWKClaimedMiningReward(address user, uint256 totalReward, uint256 claimedAt);
+    "name": "SWKClaimedMiningReward(address,uint256,uint256)",
+    "routing_key": "avacuscc.events.wallet-activity.sowaka.claim_minning_reward",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "totalReward", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "claimedAt", "type": "uint256" } ], "name": "SWKClaimedMiningReward", "type": "event" }',
+    "chain_ids": [80001, 97, 56],
+  },
+  {
+    "service_name": "wallet-activity",
+    // event VeSWKAdminDistributed(address user, uint256 veSWKAmount, uint256 stakingPeriod, uint256 distributedAt, uint256 stakedIndex);
+    "name": "VeSWKAdminDistributed(address,uint256,uint256,uint256,uint256)",
+    "routing_key": "avacuscc.events.wallet-activity.sowaka.veswk_admin_distributed",
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "veSWKAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakingPeriod", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "distributedAt", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "stakedIndex", "type": "uint256" } ], "name": "VeSWKAdminDistributed", "type": "event" }',
     "chain_ids": [80001, 97, 56],
   },
 ]
