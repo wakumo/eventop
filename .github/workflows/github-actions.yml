@@ -56,6 +56,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: yarn install
-      - run: yarn ts-node-esm create_db.ts
-      - run: yarn db:migrate:up
+      - run: yarn build
+      - run: yarn db:create:test
       - run: yarn test

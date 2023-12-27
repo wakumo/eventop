@@ -4,7 +4,7 @@ import { ConsumeMessage, Channel } from 'amqplib'
 import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
 import { sleep } from "../../commons/utils/index.js";
 import { RABBIT_MQ_MAX_BACKOFF, SECONDS_TO_MILLISECONDS } from "../../config/constants.js";
-import { EventMessageEntity } from "../../entities/index.js";
+import { EventEntity, EventMessageEntity } from "../../entities/index.js";
 import { EventMqProducer } from "./eventmq-producer.service.js";
 
 function errorHandler(channel: Channel, msg: ConsumeMessage, error: Error) {
@@ -34,7 +34,27 @@ export class EventMqConsumer {
     console.log(`DEAD MESSAGE ARRIVED. MSG_ID: ${msg.id}, RETRY_COUNT: ${xRetryCount}`);
     if (!xDeath || !xDeath.length) return; // not a dead message, we don't do anything
     if (xRetryCount >= 5) {
-      await EventMessageEntity.update({ id: msg.id }, { status: EventMessageStatus.ERROR });
+      const hasMessage = await EventMessageEntity.findOneBy({ id: msg.id });
+      if (hasMessage) await EventMessageEntity.update({ id: msg.id }, { status: EventMessageStatus.ERROR });
+      else {
+        const event = await EventEntity.findOneBy({
+          event_topic: msg.eventTopic,
+          chain_id: msg.chainId,
+        });
+        if (!event) return; // no valid event in db, maybe not a valid message
+
+        await EventMessageEntity.create({
+          event_id: event.id,
+          payload: msg.payload,
+          tx_id: msg.txId,
+          log_index: msg.logIndex,
+          block_no: msg.blockNo,
+          contract_address: msg.contractAddress,
+          timestamp: msg.timestamp,
+          status: EventMessageStatus.ERROR
+        }).save();
+      }
+
       return;
     }
 
