@@ -94,9 +94,9 @@ export const contractEvents = [
   {
     "service_name": "sns",
     "routing_key": "avacuscc.events.sns.sns_community_condition_updated",
-    // event SnsCommunityConditionUpdated(DataTypes.ConditionTypes conditionType, DataTypes.TokenType tokenType, address contractAddr, uint256 tokenId, uint256 minAmount);
-    "name": "SnsCommunityConditionUpdated(uint8,uint8,address,uint256,uint256)",
-    "abi": '{"anonymous":false,"inputs":[{"indexed":false,"internalType":"enum DataTypes.ConditionTypes","name":"conditionType","type":"uint8"},{"indexed":false,"internalType":"enum DataTypes.TokenType","name":"tokenType","type":"uint8"},{"indexed":false,"internalType":"address","name":"contractAddr","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"minAmount","type":"uint256"}],"name":"SnsCommunityConditionUpdated","type":"event"}',
+    // event SnsCommunityConditionUpdated(DataTypes.ConditionTypes[] conditionType, Condition[] conditions);
+    "name": "SnsCommunityConditionUpdated(uint8[],tuple(uint8,address,uint256,uint256)[])",
+    "abi": '{"anonymous":false,"inputs":[{"indexed":false,"internalType":"enum DataTypes.ConditionTypes[]","name":"conditionTypes","type":"uint8[]"},{"components":[{"internalType":"enum DataTypes.TokenType","name":"tokenType","type":"uint8"},{"internalType":"address","name":"contractAddr","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"uint256","name":"minAmount","type":"uint256"}],"indexed":false,"internalType":"struct DataTypes.Condition[]","name":"conditions","type":"tuple[]"}],"name":"SnsCommunityConditionUpdated","type":"event"}',
     "chain_ids": [80001, 97],
   },
   {
