@@ -106,6 +106,27 @@ export const contractEvents = [
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "joinedAt", "type": "uint256" } ], "name": "SnsCommunityJoined", "type": "event" }',
     "chain_ids": [80001, 97],
   },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.ownership_transferred",
+    "name": "OwnershipTransferred(address,address)", // event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" } ], "name": "OwnershipTransferred", "type": "event" }',
+    "chain_ids": [80001, 97],
+  },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_badge_set",
+    "name": "SnsCommunityBadgeSet(address,uint256,uint256)", // event SnsCommunityBadgeSet(address user, uint256 badgeId, uint256 amount);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "badgeId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "SnsCommunityBadgeSet", "type": "event" }',
+    "chain_ids": [80001, 97],
+  },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_badge_removed",
+    "name": "SnsCommunityBadgeRemoved(address,uint256,uint256)", // event SnsCommunityBadgeRemoved(address user, uint256 badgeId, uint256 amount);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "badgeId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "SnsCommunityBadgeRemoved", "type": "event" }',
+    "chain_ids": [80001, 97],
+  },
   // wallet activity register event
   {
     "service_name": "wallet-activity",
