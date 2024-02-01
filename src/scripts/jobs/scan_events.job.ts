@@ -1,6 +1,6 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { sleep } from '../../commons/utils/index.js';
-import { ProcessedBlockService } from '../../apis/processed-block/processed-block.service.js';
+import { ProcessedBlockService, ScanResult } from '../../apis/processed-block/processed-block.service.js';
 import { SECONDS_TO_MILLISECONDS } from "../../config/constants.js";
 
 interface ScanOptions {
@@ -22,8 +22,10 @@ export class ScanEvents extends CommandRunner {
     _: string[],
     options: ScanOptions
   ): Promise<void> {
+    let latestScanResult: ScanResult = { longSleep: false };
     while (true) {
-      const scanResult = await this.blockService.scanBlockEvents(options.chain_id);
+      const scanResult = await this.blockService.scanBlockEvents(options.chain_id, latestScanResult);
+      latestScanResult = scanResult;
       const sleepTime = (scanResult.longSleep) ? 30 : 3;
       await sleep(sleepTime * SECONDS_TO_MILLISECONDS);
     }

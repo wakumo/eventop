@@ -62,16 +62,6 @@ export class ProcessedBlockService {
     });
   }
 
-  private async _validateNetwork(chainId: number) {
-    let network = await NetworkEntity.findOne({ where: { chain_id: chainId } });
-    if (!network) {
-      throw `Invalid network: ${chainId}`;
-    }
-    network = await this.networkService.pickAndUpdateAvailableNode(network);
-
-    return network;
-  }
-
   /**
    * Get the from block number need to scan from DB for a given chainId.
    *
@@ -147,9 +137,9 @@ export class ProcessedBlockService {
    *
    * @param {number} chainId - The ID of the blockchain network.
    */
-  async scanBlockEvents(chainId: number) : Promise<ScanResult> {
+  async scanBlockEvents(chainId: number, latestScanResult?: ScanResult) : Promise<ScanResult> {
     try {
-      const network = await this._validateNetwork(chainId);
+      const network = await this._getValidNetwork(chainId, latestScanResult);
       if (network.is_stop_scan) {
         console.info(`Pause the scan on the ${network.chain_id} network`);
         return { longSleep: false };
@@ -168,6 +158,20 @@ export class ProcessedBlockService {
       const isLongSleep = error instanceof(Web3RateLimitExceededException) || error instanceof(NoAvailableNodeException);
       return { longSleep: isLongSleep };
     }
+  }
+
+  private async _getValidNetwork(chainId: number, latestScanResult?: ScanResult): Promise<NetworkEntity> {
+    let network = await NetworkEntity.findOne({ where: { chain_id: chainId } });
+
+    if (!network) {
+      throw new Error(`Invalid network: ${chainId}`);
+    }
+    // Only switch to another node if the previous scan step got error
+    if (latestScanResult?.longSleep) {
+      network = await this.networkService.pickAndUpdateAvailableNode(network);
+    }
+
+    return network;
   }
 
   /**
