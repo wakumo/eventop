@@ -10,7 +10,7 @@ export const configuration = () => {
     "db.password": process.env.DB_PASSWORD,
     "db.name": process.env.DB_NAME,
     "db.name_test": process.env.DB_NAME_TEST,
-    "db.logger_options": process.env.ENV_NAME === 'development' ? true : ['warn', 'error', 'migration'],
+    "db.logger_options": ['schema', 'warn', 'error', 'migration'],
 
     //redis config
     // "redis.host": process.env.REDIS_HOST,
