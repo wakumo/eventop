@@ -18,5 +18,5 @@ yarn execute job:scan_events -c 97 // Scan event blockchain bst testnet
 
 Rescan  by cmd:
 ```
-yarn execute job:scan_events -c <chain_id> -f <from-block> -t <to-block>
+yarn execute job:rescan_events -c <chain_id> -f <from-block> -t <to-block>
 ```

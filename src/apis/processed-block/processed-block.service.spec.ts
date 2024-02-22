@@ -63,7 +63,7 @@ describe('ProcessedBlockService', () => {
   });
 
   it('should be scan CommunityCreated and AirdropCreated events', async () => {
-    await service.scanBlockEvents(97);
+    await service.scanBlockEvents({ chain_id: 97 });
     const messages = await EventMessageEntity.find();
     const processedBlock = await ProcessedBlockEntity.createQueryBuilder(
       'processed_block',

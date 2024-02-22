@@ -4,10 +4,12 @@ import { ScanEvents } from './jobs/scan_events.job.js';
 import { EventSeed } from './seeds/events.script.js';
 import { NetworkSeed } from './seeds/networks.script.js';
 import { DeleteDeliveredMessages } from "./jobs/delete_delivered_events.job.js";
+import { RescanEvents } from "./jobs/rescan_events.job.js";
 
 export const SCRIPTS = [
     SampleJob,
     ScanEvents,
+    RescanEvents,
     NetworkSeed,
     EventSeed,
     SendEventsJob,

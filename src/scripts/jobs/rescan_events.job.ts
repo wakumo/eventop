@@ -1,14 +1,12 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { sleep } from '../../commons/utils/index.js';
-import { ProcessedBlockService, ScanResult } from '../../apis/processed-block/processed-block.service.js';
-import { SECONDS_TO_MILLISECONDS } from "../../config/constants.js";
+import { ProcessedBlockService } from '../../apis/processed-block/processed-block.service.js';
 import { ScanOption } from '../../commons/interfaces/index.js';
 
 @Command({
-  name: 'job:scan_events',
-  description: 'Scan contract events by chain id',
+  name: 'job:rescan_events',
+  description: 'Rescan contract events by chain id by specifying the range of blocks',
 })
-export class ScanEvents extends CommandRunner {
+export class RescanEvents extends CommandRunner {
   constructor(private readonly blockService: ProcessedBlockService) {
     super();
   }
@@ -17,13 +15,9 @@ export class ScanEvents extends CommandRunner {
     _: string[],
     options: ScanOption
   ): Promise<void> {
-    let latestScanResult: ScanResult = { longSleep: false };
-    while (true) {
-      const scanResult = await this.blockService.scanBlockEvents(options, latestScanResult);
-      latestScanResult = scanResult;
-      const sleepTime = (scanResult.longSleep) ? 30 : 3;
-      await sleep(sleepTime * SECONDS_TO_MILLISECONDS);
-    }
+    console.info(`Rescanning block events for chain id: ${options.chain_id}`);
+    const scanResult = await this.blockService.scanBlockEvents(options);
+    console.info(scanResult);
   }
 
   @Option({

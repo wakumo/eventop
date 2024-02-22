@@ -23,7 +23,7 @@ import { NetworkService } from '../network/network.service.js';
 import { Web3Client } from '../../commons/utils/web3-client.js';
 import { NoAvailableNodeException, Web3RateLimitExceededException } from '../../commons/exceptions/index.js';
 import { SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
-import { BlockTransactionData } from '../../commons/interfaces/index.js';
+import { BlockTransactionData, ScanOption } from '../../commons/interfaces/index.js';
 
 export interface ScanResult {
   longSleep: boolean;
@@ -82,10 +82,14 @@ export class ProcessedBlockService {
    */
   private async _getBlockRange(
     client: Web3,
-    chainId: number,
+    scanOptions: ScanOption,
   ): Promise<number[]> {
+    if (scanOptions.from_block && scanOptions.to_block) {
+      return [scanOptions.from_block, scanOptions.to_block];
+    }
+
     // Get the next block number to scan from the database
-    const nextBlockNo = await this._getNextBlockNoFromDB(chainId);
+    const nextBlockNo = await this._getNextBlockNoFromDB(scanOptions.chain_id);
     // Get the current block number from the blockchain
     const currentBlockNo = await client.eth.getBlockNumber();
 
@@ -100,14 +104,15 @@ export class ProcessedBlockService {
 
   private async _scanBlockEvents(
     nodeUrl: string,
-    chainId: number,
+    scanOptions: ScanOption,
     topics: string[],
     scanRangeNo: number,
   ) {
     const client = initClient(nodeUrl);
-    const [fromBlock, toBlock] = await this._getBlockRange(client, chainId);
+    const [fromBlock, toBlock] = await this._getBlockRange(client, scanOptions);
+    const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
     const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
-    const registedEvents = await this.eventService.getEventsByChain(chainId);
+    const registedEvents = await this.eventService.getEventsByChain(scanOptions.chain_id);
 
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
@@ -116,11 +121,12 @@ export class ProcessedBlockService {
       for (const blockRange of blockRangeChunks) {
         await this._processBlockRange(
           queryRunner,
-          chainId,
+          scanOptions.chain_id,
           client,
           blockRange,
           topics,
           registedEvents,
+          isRescan,
         );
         await await sleep(1 * SECONDS_TO_MILLISECONDS);
       }
@@ -137,21 +143,21 @@ export class ProcessedBlockService {
    *
    * @param {number} chainId - The ID of the blockchain network.
    */
-  async scanBlockEvents(chainId: number, latestScanResult?: ScanResult) : Promise<ScanResult> {
+  async scanBlockEvents(scanOptions: ScanOption, latestScanResult?: ScanResult) : Promise<ScanResult> {
     try {
-      const network = await this._getValidNetwork(chainId, latestScanResult);
+      const network = await this._getValidNetwork(scanOptions.chain_id, latestScanResult);
       if (network.is_stop_scan) {
         console.info(`Pause the scan on the ${network.chain_id} network`);
         return { longSleep: false };
       }
 
-      const topics = await this.eventService.getTopicsByChainId(chainId);
+      const topics = await this.eventService.getTopicsByChainId(scanOptions.chain_id);
       if (topics.length === 0) {
         console.info(`Event topic not found on ${network.chain_id} network`);
         return { longSleep: false };
       };
 
-      const scanResult = await this._scanBlockEvents(network.http_url, chainId, topics, network.scan_range_no);
+      const scanResult = await this._scanBlockEvents(network.http_url, scanOptions, topics, network.scan_range_no);
 
       return scanResult;
     } catch (error) {
@@ -191,6 +197,7 @@ export class ProcessedBlockService {
     blockRange: number[],
     topics: string[] = [],
     registedEvents: EventEntity[],
+    isRescan: boolean = false,
   ) {
     await queryRunner.startTransaction();
 
@@ -208,7 +215,9 @@ export class ProcessedBlockService {
         console.info(`Saved ${eventMessages.length} event messages`)
       }
 
-      await this._updateProcessedBlock(queryRunner, blockRange, chainId);
+      if (!isRescan) {
+        await this._updateProcessedBlock(queryRunner, blockRange, chainId);
+      }
 
       await queryRunner.commitTransaction();
     } catch (error) {
