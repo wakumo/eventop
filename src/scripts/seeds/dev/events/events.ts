@@ -109,8 +109,8 @@ export const contractEvents = [
   {
     "service_name": "sns",
     "routing_key": "avacuscc.events.sns.ownership_transferred",
-    "name": "OwnershipTransferred(address,address)", // event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" } ], "name": "OwnershipTransferred", "type": "event" }',
+    "name": "SnsCommunityBadgeOwnershipTransferred(address,address)", // event SnsCommunityBadgeOwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" } ], "name": "SnsCommunityBadgeOwnershipTransferred", "type": "event" }',
     "chain_ids": [80001, 97],
   },
   {
@@ -122,9 +122,29 @@ export const contractEvents = [
   },
   {
     "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_badges_set",
+    "name": "SnsCommunityBadgesSet(address[],uint256[])", // event SnsCommunityBadgesSet(address[] users, uint256[] badgeIds);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address[]", "name": "users", "type": "address[]" }, { "indexed": false, "internalType": "uint256[]", "name": "badgeIds", "type": "uint256[]" }], "name": "SnsCommunityBadgeSet", "type": "event" }',
+    "chain_ids": [80001, 97],
+  },
+  {
+    "service_name": "sns",
     "routing_key": "avacuscc.events.sns.sns_community_badge_removed",
     "name": "SnsCommunityBadgeRemoved(address,uint256,uint256)", // event SnsCommunityBadgeRemoved(address user, uint256 badgeId, uint256 amount);
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "badgeId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "SnsCommunityBadgeRemoved", "type": "event" }',
+    "chain_ids": [80001, 97],
+  },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_badges_removed",
+    "name": "SnsCommunityBadgesRemoved(address[],uint256[])", // event SnsCommunityBadgesRemoved(address[] users, uint256[] badgeIds);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address[]", "name": "users", "type": "address[]" }, { "indexed": false, "internalType": "uint256[]", "name": "badgeIds", "type": "uint256[]" }], "name": "SnsCommunityBadgeRemoved", "type": "event" }',
+    "chain_ids": [80001, 97],
+  },  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_banned",
+    "name": "SnsCommunityBadgeUserBanned(address,uint256)", // event SnsCommunityBadgeUserBanned(address user, uint256 bannedAt);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "bannedAt", "type": "uint256" }], "name": "SnsCommunityBadgeUserBanned", "type": "event" }',
     "chain_ids": [80001, 97],
   },
 ]
