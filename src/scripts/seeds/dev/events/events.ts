@@ -108,7 +108,7 @@ export const contractEvents = [
   },
   {
     "service_name": "sns",
-    "routing_key": "avacuscc.events.sns.ownership_transferred",
+    "routing_key": "avacuscc.events.sns.community_badge_ownership_transferred",
     "name": "SnsCommunityBadgeOwnershipTransferred(address,address)", // event SnsCommunityBadgeOwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" } ], "name": "SnsCommunityBadgeOwnershipTransferred", "type": "event" }',
     "chain_ids": [80001, 97],
