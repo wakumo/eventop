@@ -128,7 +128,7 @@ export class ProcessedBlockService {
           registedEvents,
           isRescan,
         );
-        await await sleep(1 * SECONDS_TO_MILLISECONDS);
+        await await sleep(0.1 * SECONDS_TO_MILLISECONDS);
       }
       return { longSleep: false }
     } catch (error) {
