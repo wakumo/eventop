@@ -140,11 +140,12 @@ export const contractEvents = [
     "name": "SnsCommunityBadgesRemoved(address[],uint256[])", // event SnsCommunityBadgesRemoved(address[] users, uint256[] badgeIds);
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address[]", "name": "users", "type": "address[]" }, { "indexed": false, "internalType": "uint256[]", "name": "badgeIds", "type": "uint256[]" }], "name": "SnsCommunityBadgeRemoved", "type": "event" }',
     "chain_ids": [80001, 97],
-  },  {
+  },
+  {
     "service_name": "sns",
-    "routing_key": "avacuscc.events.sns.sns_community_banned",
-    "name": "SnsCommunityBadgeUserBanned(address,uint256)", // event SnsCommunityBadgeUserBanned(address user, uint256 bannedAt);
-    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "bannedAt", "type": "uint256" }], "name": "SnsCommunityBadgeUserBanned", "type": "event" }',
+    "routing_key": "avacuscc.events.sns.sns_community_badge_users_banned",
+    "name": "SnsCommunityBadgeUsersBanned(address[],uint256)", // event SnsCommunityBadgeUsersBanned(address[] users, uint256 bannedAt);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address[]", "name": "users", "type": "address[]" }, { "indexed": false, "internalType": "uint256", "name": "bannedAt", "type": "uint256" }], "name": "SnsCommunityBadgeUsersBanned", "type": "event" }',
     "chain_ids": [80001, 97],
   },
 ]
