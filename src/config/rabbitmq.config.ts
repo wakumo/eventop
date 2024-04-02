@@ -30,7 +30,7 @@ export class RabbitMqConfigService {
           }
         }
       ],
-      prefetchCount: 15,
+      prefetchCount: 5,
       defaultSubscribeErrorBehavior: MessageHandlerErrorBehavior.NACK,
       defaultRpcErrorBehavior: MessageHandlerErrorBehavior.NACK,
       defaultRpcTimeout: RABBIT_MQ_TIMEOUT,
