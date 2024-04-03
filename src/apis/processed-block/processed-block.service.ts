@@ -199,15 +199,31 @@ export class ProcessedBlockService {
     registedEvents: EventEntity[],
     isRescan: boolean = false,
   ) {
+    console.info(
+      `${new Date()} [ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`
+    );
+
     await queryRunner.startTransaction();
 
     try {
-      console.info(
-        `${new Date()} [ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`
-      );
+      const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
+      const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
+
+      const latestScannedBlock = await this.latestProccessedBlockBy(chainId);
+
+      // Check if the latest scanned block is an orphan block
+      if (
+        latestScannedBlock.block_hash &&
+        latestScannedBlock.block_hash !== firstBlockData.parentHash
+      ) {
+        console.error(`${new Date()} - Orphan block detected, rollback 128 blocks and rescan`);
+        latestScannedBlock.block_no -= 128;
+        latestScannedBlock.block_hash = null;
+        await ProcessedBlockEntity.save(latestScannedBlock);
+        throw new Error('Orphan block detected');
+      }
 
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
-      const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
       const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
 
       if (eventMessages.length !== 0) {
@@ -216,8 +232,6 @@ export class ProcessedBlockService {
       }
 
       if (!isRescan) {
-        const blockNumbers = Object.keys(blockDataMap);
-        const latestBlockData: BlockTransactionData = blockDataMap[blockNumbers[blockNumbers.length - 1]];
         await this._updateProcessedBlock(queryRunner, blockRange[1], chainId, latestBlockData.hash);
       }
 
@@ -226,6 +240,16 @@ export class ProcessedBlockService {
       await queryRunner.rollbackTransaction();
       throw error; // Rethrow the error to stop further processing
     }
+  }
+
+  private _getFirstAndLastBlockNo(
+    blockData: { [blockNo: number]: BlockTransactionData }
+  ): [BlockTransactionData, BlockTransactionData] {
+    const blockNumbers = Object.keys(blockData);
+    const firstBlockData: BlockTransactionData = blockData[blockNumbers[0]];
+    const latestBlockData: BlockTransactionData = blockData[blockNumbers[blockNumbers.length - 1]];
+
+    return [firstBlockData, latestBlockData];
   }
 
   /**
