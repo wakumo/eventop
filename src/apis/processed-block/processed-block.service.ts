@@ -364,7 +364,9 @@ export class ProcessedBlockService {
         )
       );
     }
+    console.info('\nStarting to get getLogsPromises');
     const logsNestedArray = await Promise.all(getLogsPromises);
+    console.info('\nFinished getLogsPromises');
     return Array.prototype.concat([], ...logsNestedArray);
   }
 }
