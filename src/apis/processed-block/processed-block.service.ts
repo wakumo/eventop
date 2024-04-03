@@ -208,6 +208,7 @@ export class ProcessedBlockService {
 
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
       const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
+      console.log("🚀 ~ ProcessedBlockService ~ blockDataMap:", blockDataMap);
       const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
 
       if (eventMessages.length !== 0) {
@@ -332,6 +333,8 @@ export class ProcessedBlockService {
       blockDataMap[blockNo] = {
         number: BigInt(blockInfo.number),
         timestamp: BigInt(blockInfo.timestamp),
+        hash: blockInfo?.hash,
+        parentHash: blockInfo?.parentHash,
       };
     };
 
