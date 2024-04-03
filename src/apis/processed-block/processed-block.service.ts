@@ -208,7 +208,6 @@ export class ProcessedBlockService {
 
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
       const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
-      console.log("🚀 ~ ProcessedBlockService ~ blockDataMap:", blockDataMap);
       const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
 
       if (eventMessages.length !== 0) {
@@ -217,7 +216,9 @@ export class ProcessedBlockService {
       }
 
       if (!isRescan) {
-        await this._updateProcessedBlock(queryRunner, blockRange, chainId);
+        const blockNumbers = Object.keys(blockDataMap);
+        const latestBlockData: BlockTransactionData = blockDataMap[blockNumbers[blockNumbers.length - 1]];
+        await this._updateProcessedBlock(queryRunner, blockRange[1], chainId, latestBlockData.hash);
       }
 
       await queryRunner.commitTransaction();
@@ -267,11 +268,12 @@ export class ProcessedBlockService {
    */
   private async _updateProcessedBlock(
     queryRunner: QueryRunner,
-    blockRange: number[],
-    chainId: number
+    latestBlock: number,
+    chainId: number,
+    latestBlockHash: string,
   ) {
     const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
-    const updateParams = { block_no: blockRange[1] };
+    const updateParams = { block_no: latestBlock, block_hash: latestBlockHash };
 
     if (latestProcessBlock) {
       await queryRunner.manager.update(ProcessedBlockEntity, latestProcessBlock.id, updateParams);
