@@ -8,7 +8,7 @@ import { chunkArrayReturnHex } from '../../commons/utils/index.js';
 
 const fnGetBlockNumber = jest.fn();
 const fnGetPastLogs = jest.fn();
-const fnGetBlock = jest.fn();
+export const fnGetBlock = jest.fn();
 
 when(fnGetBlockNumber).mockReturnValue(24639471);
 

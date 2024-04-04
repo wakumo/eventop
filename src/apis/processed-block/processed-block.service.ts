@@ -22,7 +22,7 @@ import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
 import { Web3Client } from '../../commons/utils/web3-client.js';
 import { NoAvailableNodeException, Web3RateLimitExceededException } from '../../commons/exceptions/index.js';
-import { SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
+import { BLOCKS_RECOVER_ORPHAN, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
 import { BlockTransactionData, ScanOption } from '../../commons/interfaces/index.js';
 
 export interface ScanResult {
@@ -208,20 +208,7 @@ export class ProcessedBlockService {
     try {
       const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
       const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
-
-      const latestScannedBlock = await this.latestProccessedBlockBy(chainId);
-
-      // Check if the latest scanned block is an orphan block
-      if (
-        latestScannedBlock.block_hash &&
-        latestScannedBlock.block_hash !== firstBlockData.parentHash
-      ) {
-        console.error(`${new Date()} - Orphan block detected, rollback 128 blocks and rescan`);
-        latestScannedBlock.block_no -= 128;
-        latestScannedBlock.block_hash = null;
-        await ProcessedBlockEntity.save(latestScannedBlock);
-        throw new Error('Orphan block detected');
-      }
+      await this._handleOrphanBlock(chainId, firstBlockData);
 
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
       const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
@@ -239,6 +226,18 @@ export class ProcessedBlockService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error; // Rethrow the error to stop further processing
+    }
+  }
+
+  private async _handleOrphanBlock(chainId: number, firstBlockData: BlockTransactionData) {
+    const latestScannedBlock = await this.latestProccessedBlockBy(chainId);
+    if (latestScannedBlock.block_hash && latestScannedBlock.block_hash !== firstBlockData.parentHash) {
+      console.log((`${new Date()} - Orphan block detected, rollback 128 blocks and rescan`));
+      latestScannedBlock.block_no -= BLOCKS_RECOVER_ORPHAN;
+      latestScannedBlock.block_hash = null;
+      await ProcessedBlockEntity.save(latestScannedBlock);
+
+      throw new Error(`${new Date()} - Orphan block detected, rollback 128 blocks and rescan`);
     }
   }
 
@@ -383,6 +382,7 @@ export class ProcessedBlockService {
   ) {
     const hexChunks = chunkArrayReturnHex(fromBlock, toBlock, 2);
     const getLogsPromises = [];
+
     for (let chunkIndex = 0; chunkIndex < hexChunks.length; chunkIndex++) {
       getLogsPromises.push(
         this.scanEventByTopicsByBlockHexs(
@@ -393,9 +393,8 @@ export class ProcessedBlockService {
         )
       );
     }
-    console.info('\nStarting to get getLogsPromises');
     const logsNestedArray = await Promise.all(getLogsPromises);
-    console.info('\nFinished getLogsPromises');
+
     return Array.prototype.concat([], ...logsNestedArray);
   }
 }
