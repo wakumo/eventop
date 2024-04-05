@@ -232,7 +232,6 @@ export class ProcessedBlockService {
   private async _handleOrphanBlock(chainId: number, firstBlockData: BlockTransactionData) {
     const latestScannedBlock = await this.latestProccessedBlockBy(chainId);
     if (latestScannedBlock.block_hash && latestScannedBlock.block_hash !== firstBlockData.parentHash) {
-      console.log((`${new Date()} - Orphan block detected, rollback 128 blocks and rescan`));
       latestScannedBlock.block_no -= BLOCKS_RECOVER_ORPHAN;
       latestScannedBlock.block_hash = null;
       await ProcessedBlockEntity.save(latestScannedBlock);
