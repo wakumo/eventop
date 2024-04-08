@@ -148,4 +148,12 @@ export const contractEvents = [
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address[]", "name": "users", "type": "address[]" }, { "indexed": false, "internalType": "uint256", "name": "bannedAt", "type": "uint256" }], "name": "SnsCommunityBadgeUsersBanned", "type": "event" }',
     "chain_ids": [80001, 97],
   },
+  {
+    "service_name": "ctn",
+    "routing_key": "avacuscc.events.ctn.avacuscc_nft_deployed",
+    // event AvacusccNFTDeployed(address indexed owner, address nft, string name, string symbol, string uri, bool isTransferable, NftType nftType, bytes32 salt);
+    "name": "AvacusccNFTDeployed(address,address,string,string,string,bool,unit8,bytes32)",
+    "abi": '{ "anonymous": false, "inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": false,"internalType": "address","name": "nft","type": "address"},{"indexed": false,"internalType": "string","name": "name","type": "string"},{"indexed": false,"internalType": "string","name": "symbol","type": "string"},{"indexed": false,"internalType": "string","name": "uri","type": "string"},{ "indexed": false, "internalType": "bool", "name": "isTransferable", "type": "bool"},{ "indexed": false, "internalType": "enum AvacusccNFTIssue.NftType", "name": "nftType", "type": "uint8"},{ "indexed": false, "internalType": "bytes32", "name": "salt", "type": "bytes32"}],"name": "AvacusccNFTDeployed","type": "event"}',
+    "chain_ids": [97, 80001]
+  },
 ]
