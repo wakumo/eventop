@@ -208,7 +208,8 @@ export class ProcessedBlockService {
     try {
       const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
       const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
-      await this._handleOrphanBlock(chainId, firstBlockData);
+
+      if (!isRescan) { await this._handleOrphanBlock(chainId, firstBlockData); }
 
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
       const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
