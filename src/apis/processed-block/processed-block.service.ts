@@ -224,7 +224,7 @@ export class ProcessedBlockService {
 
       await queryRunner.commitTransaction();
     } catch (error) {
-      console.error(`${new Date()} - Error while scanning block: ${error.message}`));
+      console.error(`${new Date()} - Error while scanning block: ${error.message}`);
       await queryRunner.rollbackTransaction();
       throw error; // Rethrow the error to stop further processing
     }
