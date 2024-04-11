@@ -224,6 +224,7 @@ export class ProcessedBlockService {
 
       await queryRunner.commitTransaction();
     } catch (error) {
+      console.error(`${new Date()} - Error while scanning block: ${error.message}`));
       await queryRunner.rollbackTransaction();
       throw error; // Rethrow the error to stop further processing
     }
@@ -231,7 +232,7 @@ export class ProcessedBlockService {
 
   private async _handleOrphanBlock(chainId: number, firstBlockData: BlockTransactionData) {
     const latestScannedBlock = await this.latestProccessedBlockBy(chainId);
-    if (latestScannedBlock.block_hash && latestScannedBlock.block_hash !== firstBlockData.parentHash) {
+    if (latestScannedBlock?.block_hash && latestScannedBlock.block_hash !== firstBlockData.parentHash) {
       latestScannedBlock.block_no -= BLOCKS_RECOVER_ORPHAN;
       latestScannedBlock.block_hash = null;
       await ProcessedBlockEntity.save(latestScannedBlock);
