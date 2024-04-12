@@ -164,8 +164,7 @@ export class ProcessedBlockService {
       return scanResult;
     } catch (error) {
       console.log("🚀 ~ ProcessedBlockService ~ scanBlockEvents ~ error:", error);
-      const isLongSleep = error instanceof(Web3RateLimitExceededException) || error instanceof(NoAvailableNodeException);
-      return { longSleep: isLongSleep };
+      return { longSleep: true };
     }
   }
 
