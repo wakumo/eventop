@@ -91,7 +91,9 @@ export class ProcessedBlockService {
     // Get the next block number to scan from the database
     const nextBlockNo = await this._getNextBlockNoFromDB(scanOptions.chain_id);
     // Get the current block number from the blockchain
+    console.info('Getting current block number from the blockchain...')
     const currentBlockNo = await client.eth.getBlockNumber();
+    console.info(`Current block number: ${currentBlockNo}`);
 
     // Calculate the starting block number based on the next block or current block
     let fromBlock = nextBlockNo || Number(currentBlockNo.toString());
@@ -161,6 +163,7 @@ export class ProcessedBlockService {
 
       return scanResult;
     } catch (error) {
+      console.log("🚀 ~ ProcessedBlockService ~ scanBlockEvents ~ error:", error);
       const isLongSleep = error instanceof(Web3RateLimitExceededException) || error instanceof(NoAvailableNodeException);
       return { longSleep: isLongSleep };
     }
