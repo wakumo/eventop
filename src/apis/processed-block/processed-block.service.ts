@@ -174,6 +174,7 @@ export class ProcessedBlockService {
     }
     // Only switch to another node if the previous scan step got error
     if (latestScanResult?.longSleep) {
+      console.info(`${new Date()} - Switch to another node for ${network.chain_id} network`);
       network = await this.networkService.pickAndUpdateAvailableNode(network);
     }
 

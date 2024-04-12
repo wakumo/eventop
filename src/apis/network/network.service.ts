@@ -47,6 +47,7 @@ export class NetworkService {
       const randomNodeIndex = Math.floor(Math.random() * availableNodes.length);
       network.http_url = availableNodes[randomNodeIndex].url;
       network = await NetworkEntity.save(network);
+      console.info(`Switched to new node: ${network.http_url}`);
 
       return network;
     } else {

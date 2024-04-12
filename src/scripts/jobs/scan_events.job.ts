@@ -19,9 +19,11 @@ export class ScanEvents extends CommandRunner {
   ): Promise<void> {
     let latestScanResult: ScanResult = { longSleep: false };
     while (true) {
+      console.info(`${new Date().toISOString()} - Start scanning block events`);
       const scanResult = await this.blockService.scanBlockEvents(options, latestScanResult);
       latestScanResult = scanResult;
       const sleepTime = (scanResult.longSleep) ? 30 : 1;
+      console.info(`${new Date().toISOString()} - Scan complete, sleep for ${sleepTime} seconds`);
       await sleep(sleepTime * SECONDS_TO_MILLISECONDS);
     }
   }
