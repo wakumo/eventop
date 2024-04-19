@@ -69,6 +69,7 @@ export class EventsService {
       const result = await EventEntity.createQueryBuilder('event')
         .select('ARRAY_AGG(event.event_topic) as topics')
         .where('event.chain_id = :chainId', { chainId: chainId })
+        .andWhere('event.event_topic IS NOT NULL')
         .groupBy('event.chain_id')
         .getRawOne<ChainTopicsInterface>();
 

@@ -1,6 +1,6 @@
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
 import { Injectable } from '@nestjs/common';
-import { BlockTransactionData, LogData } from '../../commons/interfaces/index.js';
+import { BlockCoinTransfer, BlockTransactionData, LogData } from '../../commons/interfaces/index.js';
 import { DataSource, DeleteResult, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
 import { EventEntity } from '../../entities/event.entity.js';
@@ -48,6 +48,29 @@ export class EventMessageService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async createCoinTransferEventMessage(
+    chainId: number,
+    coinTransfers: BlockCoinTransfer[],
+    blockDataMap: { [blockNo: number]: BlockTransactionData; }
+  ) {
+    if (!coinTransfers.length) return [];
+
+    const coinTransferEvent = await EventEntity.findOne({ where: { name: 'coin_transfer', chain_id: chainId } });
+    if (!coinTransferEvent) { throw new Error('Coin transfer event not found'); }
+
+    const eventMessages = coinTransfers.map((coinTransfer) => {
+      return EventMessageEntity.create({
+        event_id: coinTransferEvent.id,
+        payload: JSON.stringify(coinTransfer),
+        tx_id: coinTransfer.txid,
+        block_no: coinTransfer.block_number,
+        timestamp: blockDataMap[coinTransfer.block_number].timestamp.toString(),
+      });
+    });
+
+    return eventMessages;
   }
 
   async sendPendingMessages(): Promise<void> {

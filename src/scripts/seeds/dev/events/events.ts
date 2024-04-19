@@ -156,4 +156,10 @@ export const contractEvents = [
     "abi": '{ "anonymous": false, "inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": false,"internalType": "address","name": "nft","type": "address"},{"indexed": false,"internalType": "string","name": "name","type": "string"},{"indexed": false,"internalType": "string","name": "symbol","type": "string"},{"indexed": false,"internalType": "string","name": "uri","type": "string"},{ "indexed": false, "internalType": "bool", "name": "isTransferable", "type": "bool"},{ "indexed": false, "internalType": "enum AvacusccNFTIssue.NftType", "name": "nftType", "type": "uint8"},{ "indexed": false, "internalType": "bytes32", "name": "salt", "type": "bytes32"}],"name": "AvacusccNFTDeployed","type": "event"}',
     "chain_ids": [97, 80001]
   },
+  {
+    "service_name": "balance",
+    "name": "coin_transfer",
+    "routing_key": "avacuscc.events.balance.coin_transfer",
+    "chain_ids": [97]
+  },
 ]

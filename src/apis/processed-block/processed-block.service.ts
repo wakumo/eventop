@@ -21,9 +21,10 @@ import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
 import { Web3Client } from '../../commons/utils/web3-client.js';
-import { NoAvailableNodeException, Web3RateLimitExceededException } from '../../commons/exceptions/index.js';
 import { BLOCKS_RECOVER_ORPHAN, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
-import { BlockTransactionData, ScanOption } from '../../commons/interfaces/index.js';
+import { BlockCoinTransfer, BlockTransactionData, ScanOption } from '../../commons/interfaces/index.js';
+import { ethers } from 'ethers';
+import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 
 export interface ScanResult {
   longSleep: boolean;
@@ -81,13 +82,14 @@ export class ProcessedBlockService {
    * @returns {Promise<number[]>} - An array containing the starting and ending block numbers.
    */
   private async _getBlockRange(
-    client: Web3,
+    nodeUrl: string,
     scanOptions: ScanOption,
   ): Promise<number[]> {
     if (scanOptions.from_block && scanOptions.to_block) {
       return [scanOptions.from_block, scanOptions.to_block];
     }
 
+    const client = initClient(nodeUrl);
     // Get the next block number to scan from the database
     const nextBlockNo = await this._getNextBlockNoFromDB(scanOptions.chain_id);
     // Get the current block number from the blockchain
@@ -108,8 +110,7 @@ export class ProcessedBlockService {
     topics: string[],
     scanRangeNo: number,
   ) {
-    const client = initClient(nodeUrl);
-    const [fromBlock, toBlock] = await this._getBlockRange(client, scanOptions);
+    const [fromBlock, toBlock] = await this._getBlockRange(nodeUrl, scanOptions);
     const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
     const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
     const registedEvents = await this.eventService.getEventsByChain(scanOptions.chain_id);
@@ -122,7 +123,7 @@ export class ProcessedBlockService {
         await this._processBlockRange(
           queryRunner,
           scanOptions.chain_id,
-          client,
+          nodeUrl,
           blockRange,
           topics,
           registedEvents,
@@ -194,7 +195,7 @@ export class ProcessedBlockService {
   private async _processBlockRange(
     queryRunner: QueryRunner,
     chainId: number,
-    client: Web3,
+    nodeUrl: string,
     blockRange: number[],
     topics: string[] = [],
     registedEvents: EventEntity[],
@@ -207,16 +208,19 @@ export class ProcessedBlockService {
     await queryRunner.startTransaction();
 
     try {
+      const client = initClient(nodeUrl);
       const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
       const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
 
       if (!isRescan) { await this._handleOrphanBlock(chainId, firstBlockData); }
 
+      const traceBlocks = await this._getTraceBlocks(nodeUrl, blockRange[0], blockRange[1]);
+      const coinTransfeMessages = await this._processCoinTransferEvents(traceBlocks, chainId, blockDataMap);
       const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
       const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
-
-      if (eventMessages.length !== 0) {
-        await queryRunner.manager.save(eventMessages, { chunk: 200 });
+      const messages = [...eventMessages, ...coinTransfeMessages];
+      if (messages.length !== 0) {
+        await queryRunner.manager.save(messages, { chunk: 200 });
         console.info(`Saved ${eventMessages.length} event messages`)
       }
 
@@ -226,10 +230,22 @@ export class ProcessedBlockService {
 
       await queryRunner.commitTransaction();
     } catch (error) {
-      console.error(`${new Date()} - Error while scanning block: ${error.message}`);
+      console.error(`${new Date()} - Error while scanning block: ${error}`);
       await queryRunner.rollbackTransaction();
       throw error; // Rethrow the error to stop further processing
     }
+  }
+
+  // loop through the trace blocks and get the trace data using promise.all
+  private async _getTraceBlocks(nodeUrl: string, fromBlock: number, toBlock: number) {
+    const jsonRpcClient = new JsonRpcClient(nodeUrl);
+    const traceBlocks = [];
+    for (let blockNo = fromBlock; blockNo <= toBlock; blockNo++) {
+      const traceBlock = jsonRpcClient.getTraceBlock(blockNo);
+      traceBlocks.push(traceBlock);
+    }
+
+    return await Promise.all(traceBlocks);
   }
 
   private async _handleOrphanBlock(chainId: number, firstBlockData: BlockTransactionData) {
@@ -281,6 +297,67 @@ export class ProcessedBlockService {
     }
 
     return eventMessages;
+  }
+
+  private async _processCoinTransferEvents(
+    traceBlocks: any,
+    chainId: number,
+    blockDataMap: { [blockNo: number]: BlockTransactionData; }
+  ) {
+    const coinTransfers: BlockCoinTransfer[] = [];
+
+    for (const traceBlock of traceBlocks) {
+      if (!traceBlock || traceBlock.length === 0) { continue; }
+      const results = this._findCoinTransferAddresses(traceBlock);
+      if (results.length > 0) { coinTransfers.push(...results); }
+    }
+    if (coinTransfers.length === 0) { return []; }
+
+    return await this.eventMsgService.createCoinTransferEventMessage(chainId, coinTransfers, blockDataMap);
+  }
+
+  private _findCoinTransferAddresses(traceBlock: any): BlockCoinTransfer[] {
+    const addressMap: { [txid: string]: Set<string> } = {};
+    const blockNo: number = traceBlock[0].blockNumber;
+
+    // Group addresses by transactionHash
+    traceBlock.forEach(block => {
+      const action = block.action;
+      const from = action.from;
+      const to = action.to;
+      const value = action.value;
+      const txid = block.transactionHash;
+
+      if (!value || value === "0x0") {
+        return;
+      }
+
+      // Initialize address set for this transactionHash if not exists
+      if (!addressMap[txid]) {
+        addressMap[txid] = new Set<string>();
+      }
+
+      // Check if from and to are truthy before adding to the set
+      if (from) { addressMap[txid].add(from.toLowerCase()); }
+      if (to) { addressMap[txid].add(to.toLowerCase()); }
+    });
+
+    // Convert addressMap to array format
+    const result: { block_number: number, addresses: string[], txid: string }[] = [];
+
+    for (const txid in addressMap) {
+      if (!Object.prototype.hasOwnProperty.call(addressMap, txid)) { continue; }
+
+      const addresses = Array.from(addressMap[txid]);
+      if (!txid || addresses.length === 0) {
+        continue; // Skip if txid is undefined or addresses array is empty
+      }
+
+      // Only add entries with valid txid and non-empty addresses
+      result.push({ block_number: blockNo, addresses, txid });
+    }
+
+    return result;
   }
 
   /**
@@ -396,7 +473,8 @@ export class ProcessedBlockService {
       );
     }
     const logsNestedArray = await Promise.all(getLogsPromises);
+    const filteredLogs = logsNestedArray.filter(logs => logs !== undefined);
 
-    return Array.prototype.concat([], ...logsNestedArray);
+    return Array.prototype.concat([], ...filteredLogs);
   }
 }

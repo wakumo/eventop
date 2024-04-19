@@ -33,7 +33,7 @@ export class EventEntity extends BaseEntity {
   @Column({ nullable: true })
   service_name: string;
 
-  @Column()
+  @Column({ nullable: true })
   name: string;
 
   @Index()

@@ -56,7 +56,6 @@ export const IMPORT_MODULES = [
 export async function seedTestEvents(queryRunner: QueryRunner) {
   for (const event of contractEvents) {
     for (const chainId of event.chain_ids) {
-      console.log(`Registering event: ${event.name}, chain id: ${chainId}`);
       const eventTopic = getTopicFromEvent(event.name);
       await queryRunner.manager.save(EventEntity, {
         event_topic: eventTopic,

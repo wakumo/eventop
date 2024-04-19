@@ -21,22 +21,22 @@ export class Web3Client {
     promiseFunc: any,
     retries = 0,
   ) {
-      try {
-        const result : T = await promiseFunc;
-        return result;
-      } catch (ex) {
-        console.error(ex);
-        if (retries > this.retrySchedule.length) {
-          throw new Web3RateLimitExceededException();
-        }
-        if (isRateLimitError(ex)) {
-          await sleep(this.retrySchedule[retries]);
-          return this.call(promiseFunc, ++retries);
-        } else {
-          throw ex;
-        }
+    try {
+      const result : T = await promiseFunc;
+      return result;
+    } catch (ex) {
+      console.error(ex);
+      if (retries > this.retrySchedule.length) {
+        throw new Web3RateLimitExceededException();
+      }
+      if (isRateLimitError(ex)) {
+        await sleep(this.retrySchedule[retries]);
+        return this.call(promiseFunc, ++retries);
+      } else {
+        throw ex;
       }
     }
+  }
 }
 
 function isRateLimitError(err: any): boolean {

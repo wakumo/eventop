@@ -28,7 +28,7 @@ export class EventMessageEntity extends BaseEntity {
   tx_id: string;
 
   @Index()
-  @Column()
+  @Column({ nullable: true })
   log_index: number;
 
   @Index()
@@ -40,7 +40,7 @@ export class EventMessageEntity extends BaseEntity {
   block_no: number;
 
   @Index()
-  @Column()
+  @Column({ nullable: true })
   contract_address: string;
 
   @Index()
