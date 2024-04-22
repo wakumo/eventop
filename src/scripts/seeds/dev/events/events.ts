@@ -162,6 +162,6 @@ export const contractEvents = [
     "service_name": "balance",
     "name": COIN_TRANSFER_EVENT,
     "routing_key": "avacuscc.events.balance.coin_transfer",
-    "chain_ids": [97]
+    "chain_ids": [97, 56]
   },
 ]
