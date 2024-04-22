@@ -23,7 +23,6 @@ import { NetworkService } from '../network/network.service.js';
 import { Web3Client } from '../../commons/utils/web3-client.js';
 import { BLOCKS_RECOVER_ORPHAN, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
 import { BlockCoinTransfer, BlockTransactionData, ScanOption } from '../../commons/interfaces/index.js';
-import { ethers } from 'ethers';
 import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 
 export interface ScanResult {
@@ -54,7 +53,7 @@ export class ProcessedBlockService {
    * @param {number} chainId - The ID of the blockchain network.
    * @returns {Promise<ProcessedBlockEntity | undefined>} - The latest processed block entity.
    */
-  async latestProccessedBlockBy(chainId: number): Promise<ProcessedBlockEntity | undefined> {
+  private async latestProccessedBlockBy(chainId: number): Promise<ProcessedBlockEntity | undefined> {
     return await ProcessedBlockEntity.findOne({
       where: {
         chain_id: chainId
@@ -77,8 +76,7 @@ export class ProcessedBlockService {
   /**
    * Get the block range for scanning coin transfers.
    *
-   * @param {Web3} client - The Web3 client instance.
-   * @param {number} chainId - The ID of the blockchain network.
+   * @param {nodeUrl} nodeUrl - Blockchain node url
    * @returns {Promise<number[]>} - An array containing the starting and ending block numbers.
    */
   private async _getBlockRange(
@@ -141,12 +139,10 @@ export class ProcessedBlockService {
 
   /**
    * Scan blockchain events for a given chainId within a specified block range.
-   *
-   * @param {number} chainId - The ID of the blockchain network.
    */
   async scanBlockEvents(scanOptions: ScanOption, latestScanResult?: ScanResult) : Promise<ScanResult> {
     try {
-      const network = await this._getValidNetwork(scanOptions.chain_id, latestScanResult);
+      const network = await this._findNetworkBy(scanOptions.chain_id, latestScanResult);
       if (network.is_stop_scan) {
         console.info(`Pause the scan on the ${network.chain_id} network`);
         return { longSleep: false };
@@ -167,7 +163,17 @@ export class ProcessedBlockService {
     }
   }
 
-  private async _getValidNetwork(chainId: number, latestScanResult?: ScanResult): Promise<NetworkEntity> {
+  /**
+   * Finds a network entity by its chain ID.
+   * Only switch to another node if the previous scan step got error.
+   * Replace the URL with a new one in case of a crash.
+   *
+   * @param chainId The chain ID to search for.
+   * @param latestScanResult The latest scan result object.
+   *
+   * @returns The found network entity.
+   */
+  private async _findNetworkBy(chainId: number, latestScanResult?: ScanResult): Promise<NetworkEntity> {
     let network = await NetworkEntity.findOne({ where: { chain_id: chainId } });
 
     if (!network) {
@@ -187,7 +193,7 @@ export class ProcessedBlockService {
    *
    * @param {QueryRunner} queryRunner - The TypeORM query runner.
    * @param {number} chainId - The ID of the blockchain network.
-   * @param {Web3} client - The Web3 client for blockchain interaction.
+   * @param {nodeUrl} nodeUrl - The blockchain node http url
    * @param {number[]} blockRange - The range of blocks to process.
    * @param {string[]} topics - The topics to filter events.
    * @param {EventEntity[]} registedEvents - The registered events for the chain.
@@ -214,14 +220,13 @@ export class ProcessedBlockService {
 
       if (!isRescan) { await this._handleOrphanBlock(chainId, firstBlockData); }
 
-      const traceBlocks = await this._getTraceBlocks(nodeUrl, blockRange[0], blockRange[1]);
-      const coinTransfeMessages = await this._processCoinTransferEvents(traceBlocks, chainId, blockDataMap);
-      const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
-      const eventMessages = this._processLogs(logs, registedEvents, chainId, blockDataMap);
-      const messages = [...eventMessages, ...coinTransfeMessages];
+      const coinTransferMessages = await this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap);
+      const contractEventMessages = await this._processContractEvents(client, blockRange, topics, registedEvents, chainId, blockDataMap);
+
+      const messages = [...contractEventMessages, ...coinTransferMessages];
       if (messages.length !== 0) {
         await queryRunner.manager.save(messages, { chunk: 200 });
-        console.info(`Saved ${eventMessages.length} event messages`)
+        console.info(`Saved ${messages.length} event messages`)
       }
 
       if (!isRescan) {
@@ -272,16 +277,17 @@ export class ProcessedBlockService {
   /**
    * Process logs and create event messages.
    *
-   * @param {any[]} logs - The logs retrieved from the blockchain.
-   * @param {EventEntity[]} registedEvents - The registered events for the chain.
-   * @param {number} chainId - The ID of the blockchain network.
-   * @returns {any[]} - The event messages created from the logs.
+   * @returns {EventMessageEntity[]} - The event messages created from the logs.
    */
-  private _processLogs(
-    logs: any[], registedEvents: any[],
+  private async _processContractEvents(
+    client: Web3,
+    blockRange: number[],
+    topics: string[],
+    registedEvents: any[],
     chainId: number,
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
-  ): EventMessageEntity[] {
+  ): Promise<EventMessageEntity[]> {
+    const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
     let eventMessages = [];
 
     for (const log of logs) {
@@ -300,12 +306,14 @@ export class ProcessedBlockService {
   }
 
   private async _processCoinTransferEvents(
-    traceBlocks: any,
+    nodeUrl: string,
+    blockRange: number[],
     chainId: number,
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
   ) {
-    const coinTransfers: BlockCoinTransfer[] = [];
+    const traceBlocks = await this._getTraceBlocks(nodeUrl, blockRange[0], blockRange[1]);
 
+    const coinTransfers: BlockCoinTransfer[] = [];
     for (const traceBlock of traceBlocks) {
       if (!traceBlock || traceBlock.length === 0) { continue; }
       const results = this._findCoinTransferAddresses(traceBlock);
@@ -362,11 +370,6 @@ export class ProcessedBlockService {
 
   /**
    * Update the processed block after scanning.
-   *
-   * @param {QueryRunner} queryRunner - The TypeORM query runner.
-   * @param {boolean} ignoreUpdate - Flag to ignore block updates.
-   * @param {number[]} blockRange - The range of blocks processed.
-   * @param {number} chainId - The ID of the blockchain network.
    */
   private async _updateProcessedBlock(
     queryRunner: QueryRunner,
