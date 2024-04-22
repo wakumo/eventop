@@ -22,6 +22,7 @@ export const RABBIT_MQ_MAX_BACKOFF = 1 * MINUTES_MS;
 export const TRANSFERED_EVENT_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
 export const BLOCKS_RECOVER_ORPHAN = 128;
+export const COIN_TRANSFER_EVENT = 'coin_transfer';
 
 export function DECIMAL(precision: number, scale: number): ColumnOptions {
   return {

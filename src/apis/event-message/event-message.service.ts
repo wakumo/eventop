@@ -6,6 +6,7 @@ import Web3 from 'web3';
 import { EventEntity } from '../../entities/event.entity.js';
 import { EventMessageStatus } from "../../commons/enums/event_message_status.enum.js";
 import { EventMqProducer } from "../../rabbitmq/services/eventmq-producer.service.js";
+import { COIN_TRANSFER_EVENT } from '../../config/constants.js';
 
 @Injectable()
 export class EventMessageService {
@@ -57,20 +58,27 @@ export class EventMessageService {
   ) {
     if (!coinTransfers.length) return [];
 
-    const coinTransferEvent = await EventEntity.findOne({ where: { name: 'coin_transfer', chain_id: chainId } });
-    if (!coinTransferEvent) { throw new Error('Coin transfer event not found'); }
+    // Find all coin transfer events for the given chainId
+    const coinTransferEvents = await EventEntity.find({ where: { name: COIN_TRANSFER_EVENT, chain_id: chainId } });
+    if (!coinTransferEvents.length) {
+      throw new Error('Coin transfer events not found');
+    }
 
-    const eventMessages = coinTransfers.map((coinTransfer) => {
-      return EventMessageEntity.create({
-        event_id: coinTransferEvent.id,
-        payload: JSON.stringify(coinTransfer),
-        tx_id: coinTransfer.txid,
-        block_no: coinTransfer.block_number,
-        timestamp: blockDataMap[coinTransfer.block_number].timestamp.toString(),
+    let messages: EventMessageEntity[] = [];
+    for (const event of coinTransferEvents) {
+      const newMessages = coinTransfers.map((coinTransfer) => {
+        return EventMessageEntity.create({
+          event_id: event.id,
+          payload: JSON.stringify(coinTransfer),
+          tx_id: coinTransfer.txid,
+          block_no: coinTransfer.block_number,
+          timestamp: blockDataMap[coinTransfer.block_number].timestamp.toString(),
+        });
       });
-    });
+      if (newMessages.length) messages.push(...newMessages);
+    }
 
-    return eventMessages;
+    return messages;
   }
 
   async sendPendingMessages(): Promise<void> {

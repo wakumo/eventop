@@ -1,3 +1,5 @@
+import { COIN_TRANSFER_EVENT } from "../../../../config/constants.js";
+
 export const contractEvents = [
   {
     "service_name": "ctn",
@@ -158,7 +160,7 @@ export const contractEvents = [
   },
   {
     "service_name": "balance",
-    "name": "coin_transfer",
+    "name": COIN_TRANSFER_EVENT,
     "routing_key": "avacuscc.events.balance.coin_transfer",
     "chain_ids": [97]
   },
