@@ -159,6 +159,14 @@ export const contractEvents = [
     "chain_ids": [97, 80001]
   },
   {
+    "service_name": "ctn",
+    "routing_key": "avacuscc.events.ctn.avacuscc_nft_is_transferable_updated",
+    // event AvacusccNftTransferable(bool isTransferable)
+    "name": "AvacusccNftTransferable(bool)",
+    "abi": '{"anonymous": false,"inputs": [{"indexed": false,"internalType": "bool","name": "isTransferable","type": "bool"}],"name": "AvacusccNftTransferable","type": "event"}',
+    "chain_ids": [97, 80001]
+  },
+  {
     "service_name": "balance",
     "name": COIN_TRANSFER_EVENT,
     "routing_key": "avacuscc.events.balance.coin_transfer",
