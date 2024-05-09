@@ -131,6 +131,7 @@ export class ProcessedBlockService {
       }
       return { longSleep: false }
     } catch (error) {
+      console.log("🚀 ~ ProcessedBlockService ~ error:", error);
       throw error;
     } finally {
       await queryRunner.release();
