@@ -23,6 +23,7 @@ export const TRANSFERED_EVENT_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f
 
 export const BLOCKS_RECOVER_ORPHAN = 128;
 export const COIN_TRANSFER_EVENT = 'coin_transfer';
+export const PROCESS_TIMEOUT_IN_MS = 10 * SECONDS_TO_MILLISECONDS;
 
 export function DECIMAL(precision: number, scale: number): ColumnOptions {
   return {
