@@ -21,9 +21,10 @@ import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
 import { Web3Client } from '../../commons/utils/web3-client.js';
-import { BLOCKS_RECOVER_ORPHAN, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
+import { BLOCKS_RECOVER_ORPHAN, PROCESS_TIMEOUT_IN_MS, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
 import { BlockCoinTransfer, BlockTransactionData, ScanOption } from '../../commons/interfaces/index.js';
 import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
+import { ProcessedBlockOutdateException } from '../../commons/exceptions/index.js';
 
 export interface ScanResult {
   longSleep: boolean;
@@ -63,16 +64,15 @@ export class ProcessedBlockService {
   }
 
   /**
-   * Get the from block number need to scan from DB for a given chainId.
+   * Get latest processed block record from DB for a given chainId.
    *
    * @param {number} chainId - The ID of the blockchain network.
-   * @returns {Promise<number | null>} - The next block number.
+   * @returns {Promise<ProcessedBlockEntity | null>} - The latest processed block
    */
-  private async _getNextBlockNoFromDB(chainId: number): Promise<number | null> {
+  private async _getLatestScannedBlock(chainId: number): Promise<ProcessedBlockEntity | null> {
     const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
-    return latestProcessBlock ? latestProcessBlock.block_no + 1 : null;
+    return latestProcessBlock;
   }
-
   /**
    * Get the block range for scanning coin transfers.
    *
@@ -89,7 +89,12 @@ export class ProcessedBlockService {
 
     const client = initClient(nodeUrl);
     // Get the next block number to scan from the database
-    const nextBlockNo = await this._getNextBlockNoFromDB(scanOptions.chain_id);
+    const latestProcessedBlock = await this._getLatestScannedBlock(scanOptions.chain_id);
+    // Raise error to switch node if the latest update time is too long
+    const isBlockOutdated = latestProcessedBlock && latestProcessedBlock.updated_at.getTime() + PROCESS_TIMEOUT_IN_MS < Date.now();
+    if (isBlockOutdated) { throw new ProcessedBlockOutdateException(); }
+
+    const nextBlockNo = latestProcessedBlock ? latestProcessedBlock.block_no + 1 : null;
     // Get the current block number from the blockchain
     const currentBlockNo = await client.eth.getBlockNumber();
 
@@ -108,15 +113,16 @@ export class ProcessedBlockService {
     topics: string[],
     scanRangeNo: number,
   ) {
-    const [fromBlock, toBlock] = await this._getBlockRange(nodeUrl, scanOptions);
-    const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
-    const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
     const registedEvents = await this.eventService.getEventsByChain(scanOptions.chain_id);
 
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
     try {
+      const [fromBlock, toBlock] = await this._getBlockRange(nodeUrl, scanOptions);
+      const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
+      const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
+
       for (const blockRange of blockRangeChunks) {
         await this._processBlockRange(
           queryRunner,
@@ -131,7 +137,6 @@ export class ProcessedBlockService {
       }
       return { longSleep: false }
     } catch (error) {
-      console.log("🚀 ~ ProcessedBlockService ~ error:", error);
       throw error;
     } finally {
       await queryRunner.release();
