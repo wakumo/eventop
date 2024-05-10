@@ -181,6 +181,7 @@ export class ProcessedBlockService {
     if (!network) {
       throw new Error(`Network not found for chain ID: ${chainId}`);
     }
+    if (network.is_stop_scan) { return network; }
 
     // Determine if switching to another node is necessary
     const isShouldSwitchNode = await this._shouldSwitchNode(latestScanResult, chainId);
