@@ -90,10 +90,6 @@ export class ProcessedBlockService {
     const client = initClient(nodeUrl);
     // Get the next block number to scan from the database
     const latestProcessedBlock = await this._getLatestScannedBlock(scanOptions.chain_id);
-    // Raise error to switch node if the latest update time is too long
-    const isBlockOutdated = latestProcessedBlock && latestProcessedBlock.updated_at.getTime() + PROCESS_TIMEOUT_IN_MS < Date.now();
-    if (isBlockOutdated) { throw new ProcessedBlockOutdateException(); }
-
     const nextBlockNo = latestProcessedBlock ? latestProcessedBlock.block_no + 1 : null;
     // Get the current block number from the blockchain
     const currentBlockNo = await client.eth.getBlockNumber();
@@ -183,15 +179,29 @@ export class ProcessedBlockService {
     let network = await NetworkEntity.findOne({ where: { chain_id: chainId } });
 
     if (!network) {
-      throw new Error(`Invalid network: ${chainId}`);
+      throw new Error(`Network not found for chain ID: ${chainId}`);
     }
-    // Only switch to another node if the previous scan step got error
-    if (latestScanResult?.longSleep) {
-      console.info(`${new Date()} - Switch to another node for ${network.chain_id} network`);
-      network = await this.networkService.pickAndUpdateAvailableNode(network);
+
+    // Determine if switching to another node is necessary
+    const isShouldSwitchNode = await this._shouldSwitchNode(latestScanResult, chainId);
+    if (isShouldSwitchNode) {
+      console.info(`${new Date()} - Switching to another node for network ${network.chain_id}`);
+      const nodesToExclude = latestScanResult?.longSleep ? [] : [network.http_url];
+      network = await this.networkService.pickAndUpdateAvailableNode(network, nodesToExclude);
     }
 
     return network;
+  }
+
+  // Determine if switching to another node is necessary based on the latest scan result
+  private async _shouldSwitchNode(latestScanResult: ScanResult, chainId: number): Promise<boolean> {
+    return latestScanResult?.longSleep || await this._isCurrentBlockOutdated(chainId);
+  }
+
+  // Check if the current node's block is outdated
+  private async _isCurrentBlockOutdated(chainId: number): Promise<boolean> {
+    const latestProcessedBlock = await this._getLatestScannedBlock(chainId);
+    return latestProcessedBlock && latestProcessedBlock.updated_at && latestProcessedBlock.updated_at.getTime() + PROCESS_TIMEOUT_IN_MS < Date.now();
   }
 
   /**

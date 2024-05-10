@@ -28,10 +28,12 @@ export class NetworkService {
     return { url: url, isAvailable: false };
   }
 
-  async pickAndUpdateAvailableNode(network: NetworkEntity): Promise<NetworkEntity> {
+  async pickAndUpdateAvailableNode(network: NetworkEntity, excludedUrls?: string[]): Promise<NetworkEntity> {
     // Update new available node url if current main node is not available
     let nodeCheckPromises = [];
-    for (let nodeUrl of network.node_urls) {
+    // Filter out excluded URLs from node URLs if they exist
+    let nodeUrls = excludedUrls ? network.node_urls.filter(url => !excludedUrls.includes(url)) : network.node_urls;
+    for (let nodeUrl of nodeUrls) {
       nodeCheckPromises.push(this.isAvailableNode(nodeUrl));
     }
     const nodeStatuses = await Promise.all(nodeCheckPromises);
