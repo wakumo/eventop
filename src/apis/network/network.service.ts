@@ -29,12 +29,6 @@ export class NetworkService {
   }
 
   async pickAndUpdateAvailableNode(network: NetworkEntity): Promise<NetworkEntity> {
-    // Return current network if main node is available
-    if (network.http_url) {
-      const nodeStatus = await this.isAvailableNode(network.http_url);
-      if (nodeStatus.isAvailable) { return network; }
-    }
-
     // Update new available node url if current main node is not available
     let nodeCheckPromises = [];
     for (let nodeUrl of network.node_urls) {
