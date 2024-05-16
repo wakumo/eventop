@@ -1,3 +1,5 @@
+import { COIN_TRANSFER_EVENT } from "../../../../config/constants";
+
 export const contractEvents = [
   {
     "service_name": "ctn",
@@ -105,5 +107,48 @@ export const contractEvents = [
     "name": "SnsCommunityJoined(address,uint256)", // event SnsCommunityJoined(address user, uint256 joinedAt);
     "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "joinedAt", "type": "uint256" } ], "name": "SnsCommunityJoined", "type": "event" }',
     "chain_ids": [1, 56, 137],
+  },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.ownership_transferred",
+    "name": "OwnershipTransferred(address,address)", // event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" } ], "name": "OwnershipTransferred", "type": "event" }',
+    "chain_ids": [1, 56, 137],
+  },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_badge_set",
+    "name": "SnsCommunityBadgeSet(address,uint256,uint256)", // event SnsCommunityBadgeSet(address user, uint256 badgeId, uint256 amount);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "badgeId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "SnsCommunityBadgeSet", "type": "event" }',
+    "chain_ids": [1, 56, 137],
+  },
+  {
+    "service_name": "sns",
+    "routing_key": "avacuscc.events.sns.sns_community_badge_removed",
+    "name": "SnsCommunityBadgeRemoved(address,uint256,uint256)", // event SnsCommunityBadgeRemoved(address user, uint256 badgeId, uint256 amount);
+    "abi": '{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "badgeId", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "SnsCommunityBadgeRemoved", "type": "event" }',
+    "chain_ids": [1, 56, 137],
+  },
+  {
+    "service_name": "balance",
+    "name": COIN_TRANSFER_EVENT,
+    "routing_key": "avacuscc.events.balance.coin_transfer",
+    "chain_ids": [1, 56, 137],
+  },
+  {
+    "service_name": "ctn",
+    "routing_key": "avacuscc.events.ctn.avacuscc_nft_deployed",
+    // event AvacusccNFTDeployed(address indexed owner, address nft, string name, string symbol, string uri, bool isTransferable, NftType nftType, bytes32 salt);
+    "name": "AvacusccNFTDeployed(address,address,string,string,string,bool,uint8,bytes32)",
+    "abi": '{ "anonymous": false, "inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": false,"internalType": "address","name": "nft","type": "address"},{"indexed": false,"internalType": "string","name": "name","type": "string"},{"indexed": false,"internalType": "string","name": "symbol","type": "string"},{"indexed": false,"internalType": "string","name": "uri","type": "string"},{ "indexed": false, "internalType": "bool", "name": "isTransferable", "type": "bool"},{ "indexed": false, "internalType": "enum AvacusccNFTIssue.NftType", "name": "nftType", "type": "uint8"},{ "indexed": false, "internalType": "bytes32", "name": "salt", "type": "bytes32"}],"name": "AvacusccNFTDeployed","type": "event"}',
+    "chain_ids": [1, 56, 137]
+  },
+  {
+    "service_name": "ctn",
+    "routing_key": "avacuscc.events.ctn.avacuscc_nft_is_transferable_updated",
+    // event AvacusccNftTransferable(bool isTransferable)
+    "name": "AvacusccNftTransferable(bool)",
+    "abi": '{"anonymous": false,"inputs": [{"indexed": false,"internalType": "bool","name": "isTransferable","type": "bool"}],"name": "AvacusccNftTransferable","type": "event"}',
+    "chain_ids": [1, 56, 137]
   },
 ]
