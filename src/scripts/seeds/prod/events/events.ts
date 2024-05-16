@@ -1,4 +1,4 @@
-import { COIN_TRANSFER_EVENT } from "../../../../config/constants";
+import { COIN_TRANSFER_EVENT } from "../../../../config/constants.js";
 
 export const contractEvents = [
   {
