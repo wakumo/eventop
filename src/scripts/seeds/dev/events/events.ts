@@ -172,4 +172,20 @@ export const contractEvents = [
     "routing_key": "avacuscc.events.balance.coin_transfer",
     "chain_ids": [97, 56]
   },
+  {
+    "service_name": "balance",
+    "routing_key": "avacuscc.events.balance.venus_event_update",
+    // event AccrueInterest(uint256 cashPrior,uint256 interestAccumulated,uint256 borrowIndex,uint256 totalBorrows)
+    "name": "AccrueInterest(uint256,uint256,uint256,uint256)",
+    "abi": '{"anonymous": false,"inputs": [{"indexed": false,"internalType": "uint256","name": "cashPrior","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "interestAccumulated","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "borrowIndex","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "totalBorrows","type": "uint256"}],"name": "AccrueInterest","type": "event"}',
+    "chain_ids": [97, 80001]
+  },
+  {
+    "service_name": "balance",
+    "routing_key": "avacuscc.events.balance.aave_event_update",
+    // event ReserveDataUpdated (address indexed reserve, uint256 liquidityRate, uint256 stableBorrowRate, uint256 variableBorrowRate, uint256 liquidityIndex, uint256 variableBorrowIndex)
+    "name": "ReserveDataUpdated(address,uint256,uint256,uint256,uint256,uint256)",
+    "abi": '{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "reserve","type": "address"},{"indexed": false,"internalType": "uint256","name": "liquidityRate","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "stableBorrowRate","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "variableBorrowRate","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "liquidityIndex","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "variableBorrowIndex","type": "uint256"}],"name": "ReserveDataUpdated","type": "event"}',
+    "chain_ids": [97, 80001]
+  },
 ]
