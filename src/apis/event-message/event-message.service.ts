@@ -35,16 +35,23 @@ export class EventMessageService {
     } catch (error) {
       return null;
     }
-
+    const transactionHash = log['transactionHash'].toLowerCase();
     try {
+      let from, to;
+      if (blockData?.transactionsByHash && blockData?.transactionsByHash[transactionHash]) {
+        from = blockData.transactionsByHash[transactionHash]['from'];
+        to = blockData.transactionsByHash[transactionHash]['to'];
+      }
       return EventMessageEntity.create({
         event_id: event.id,
         payload: JSON.stringify(payload),
-        tx_id: log['transactionHash'],
+        tx_id: transactionHash,
         log_index: log['logIndex'],
         block_no: log['blockNumber'],
         contract_address: log['address'],
         timestamp: blockData.timestamp.toString(),
+        from,
+        to,
       });
     } catch (error) {
       throw error;
@@ -122,6 +129,8 @@ export class EventMessageService {
           blockNo: message.block_no,
           contractAddress: message.contract_address,
           timestamp: message.timestamp,
+          from: message.from,
+          to: message.to,
         }
         // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);

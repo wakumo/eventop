@@ -65,7 +65,8 @@ when(fnGetPastLogs)
   })
   .mockReturnValue([]);
 
-when(fnGetBlock).calledWith(expect.any(Number)).mockImplementation((blockNo) => {
+const whenAny = when(arg => true)
+when(fnGetBlock).calledWith(expect.any(Number), whenAny).mockImplementation((blockNo) => {
   return { number: blockNo, timestamp: 1703134791 }
 });
 

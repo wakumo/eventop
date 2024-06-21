@@ -61,6 +61,12 @@ export class EventMessageEntity extends BaseEntity {
   })
   status: EventMessageStatus;
 
+  @Column({ nullable: true })
+  from: string;
+
+  @Column({ nullable: true })
+  to: string;
+
   @Expose()
   @CreateDateColumn()
   created_at: Date;

@@ -5,12 +5,16 @@ import {
 } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
+import { BlockCoinTransfer, BlockTransactionData, ScanOption, TransactionsByHash } from '../../commons/interfaces/index.js';
 import { initClient } from '../../commons/utils/blockchain.js';
 import {
   chunkArray,
   chunkArrayReturnHex,
   sleep,
 } from '../../commons/utils/index.js';
+import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
+import { Web3Client } from '../../commons/utils/web3-client.js';
+import { BLOCKS_RECOVER_ORPHAN, PROCESS_TIMEOUT_IN_MS, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
 import {
   EventEntity,
   EventMessageEntity,
@@ -20,11 +24,6 @@ import {
 import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
-import { Web3Client } from '../../commons/utils/web3-client.js';
-import { BLOCKS_RECOVER_ORPHAN, PROCESS_TIMEOUT_IN_MS, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
-import { BlockCoinTransfer, BlockTransactionData, ScanOption } from '../../commons/interfaces/index.js';
-import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
-import { ProcessedBlockOutdateException } from '../../commons/exceptions/index.js';
 
 export interface ScanResult {
   longSleep: boolean;
@@ -233,6 +232,7 @@ export class ProcessedBlockService {
     try {
       const client = initClient(nodeUrl);
       const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
+
       const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
 
       if (!isRescan) { await this._handleOrphanBlock(chainId, firstBlockData); }
@@ -440,9 +440,27 @@ export class ProcessedBlockService {
     return await this.web3Client.call(getLogsPromise);
   }
 
-  private async _getBlock(client: Web3, blockNo: number): Promise<BlockTransactionData> {
-    const getBlockPromise = client.eth.getBlock(blockNo);
-    return await this.web3Client.call(getBlockPromise);
+  private async _getBlock(client: Web3, blockNo: number, isVerbose: boolean = true): Promise<BlockTransactionData> {
+    const getBlockPromise = client.eth.getBlock(blockNo, isVerbose);
+    const blockResponse = await this.web3Client.call(getBlockPromise);
+    this._addTransactionsByHashToBlockData(blockResponse);
+    return blockResponse;
+  }
+
+  // remapping transactions
+  // transform transactions array to object with tx_hash as key
+  private async _addTransactionsByHashToBlockData(blockResponse: any) {
+    let transactionsByHash : TransactionsByHash;
+    if (blockResponse?.transactions) {
+      transactionsByHash = blockResponse.transactions.reduce( (joined, value) => {
+        joined[value.hash.toLowerCase()] = {
+          from: value.from,
+          to: value.to
+        };
+        return joined;
+      }, {})
+    }
+    blockResponse.transactionsByHash = transactionsByHash;
   }
 
   async getBulkBlocksData(
@@ -459,6 +477,7 @@ export class ProcessedBlockService {
         timestamp: BigInt(blockInfo.timestamp),
         hash: blockInfo?.hash,
         parentHash: blockInfo?.parentHash,
+        transactionsByHash: blockInfo?.transactionsByHash
       };
     };
 

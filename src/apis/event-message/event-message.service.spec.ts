@@ -80,7 +80,9 @@ describe('EventMessageService', () => {
         logIndex: 1,
         blockNo: '10000000',
         timestamp: null,
-        contractAddress: '0x0E1eF4b2a2f3D7eC00521648B690dC6D4f5d83ea'
+        contractAddress: '0x0E1eF4b2a2f3D7eC00521648B690dC6D4f5d83ea',
+        from: null,
+        to: null
       },
       undefined
     );
