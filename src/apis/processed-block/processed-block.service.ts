@@ -459,8 +459,8 @@ export class ProcessedBlockService {
         };
         return joined;
       }, {})
+      blockResponse.transactionsByHash = transactionsByHash;
     }
-    blockResponse.transactionsByHash = transactionsByHash;
   }
 
   async getBulkBlocksData(
