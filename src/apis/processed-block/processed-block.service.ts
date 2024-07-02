@@ -144,7 +144,8 @@ export class ProcessedBlockService {
   async scanBlockEvents(scanOptions: ScanOption, latestScanResult?: ScanResult) : Promise<ScanResult> {
     try {
       const network = await this._findNetworkBy(scanOptions.chain_id, latestScanResult);
-      if (network.is_stop_scan) {
+      const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
+      if (!isRescan && network.is_stop_scan) {
         console.info(`Pause the scan on the ${network.chain_id} network`);
         return { longSleep: false };
       }
