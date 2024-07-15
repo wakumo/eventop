@@ -16,6 +16,9 @@ import { EventsModule } from './apis/events/events.module.js';
 import { ProcessedBlockModule } from './apis/processed-block/processed-block.module.js';
 import { EventMessageModule } from "./apis/event-message/event-message.module.js";
 import { EventMqJobModule } from "./rabbitmq/eventmq-job.module.js";
+import { CacheManagerModule } from './commons/cache-manager/cache-manager.module.js';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { RedisConfigService } from './config/redis.config.js';
 
 @Module({
   imports: [
@@ -27,10 +30,10 @@ import { EventMqJobModule } from "./rabbitmq/eventmq-job.module.js";
       imports: [ConfigModule],
       useClass: DatabaseConfigService,
     }),
-    // RedisModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   useClass: RedisConfigService,
-    // }),
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      useClass: RedisConfigService,
+    }),
     // BullModule.forRootAsync({
     //   imports: [ConfigModule],
     //   useClass: BullConfigService,
@@ -40,7 +43,8 @@ import { EventMqJobModule } from "./rabbitmq/eventmq-job.module.js";
     EventsModule,
     ProcessedBlockModule,
     EventMessageModule,
-    EventMqJobModule
+    EventMqJobModule,
+    CacheManagerModule,
   ],
   controllers: [AppController],
   providers: [AppService, ...SCRIPTS],

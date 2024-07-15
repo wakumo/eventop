@@ -4,6 +4,9 @@ import { ProcessedBlockService, ScanResult } from '../../apis/processed-block/pr
 import { SECONDS_TO_MILLISECONDS } from "../../config/constants.js";
 import { ScanOption } from '../../commons/interfaces/index.js';
 
+const SHORT_SLEEP = 0.1;
+const LONG_SLEEP = 15 * SECONDS_TO_MILLISECONDS; // 15 seconds in milliseconds
+
 @Command({
   name: 'job:scan_events',
   description: 'Scan contract events by chain id',
@@ -13,21 +16,16 @@ export class ScanEvents extends CommandRunner {
     super();
   }
 
-  async run(
-    _: string[],
-    options: ScanOption
-  ): Promise<void> {
+  async run(_: string[], options: ScanOption): Promise<void> {
     let latestScanResult: ScanResult = { longSleep: false };
 
     while (true) {
       console.info(`${new Date()} - Start scanning block events`);
 
-      const scanResult = await this.blockService.scanBlockEvents(options, latestScanResult);
-
-      latestScanResult = scanResult;
-      const sleepTime = (scanResult.longSleep) ? 15 : 1;
-      console.info(`${new Date()} - Scan complete, sleep for ${sleepTime} seconds`);
-      await sleep(sleepTime * SECONDS_TO_MILLISECONDS);
+      latestScanResult = await this.blockService.scanBlockEvents(options, latestScanResult);
+      const sleepTime = latestScanResult.longSleep ? LONG_SLEEP : SHORT_SLEEP;
+      console.info(`${new Date()} - Scan complete, sleep for ${sleepTime / 1000} seconds`);
+      await sleep(sleepTime);
     }
   }
 

@@ -1,14 +1,19 @@
+import _ from 'lodash';
+import { ChainTopicsInterface } from 'src/commons/interfaces/chain_topics.interface.js';
+import { DataSource } from 'typeorm';
+
 import { Injectable } from '@nestjs/common';
+
+import { CacheManagerService } from '../../commons/cache-manager/cache-manager.service.js';
 import { getABIInputsHash, getTopicFromEvent } from '../../commons/utils/blockchain.js';
 import { EventEntity } from '../../entities/index.js';
-import { DataSource } from 'typeorm';
 import { CreateEventDto } from './dto/create-event.dto';
-import { ChainTopicsInterface } from 'src/commons/interfaces/chain_topics.interface.js';
-import _ from 'lodash';
 
 @Injectable()
 export class EventsService {
-  constructor(private connection: DataSource) {}
+  constructor(
+    private connection: DataSource,
+  ) {}
 
   async registerEvent(createEventDto: CreateEventDto) {
     const queryRunner = this.connection.createQueryRunner();

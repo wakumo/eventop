@@ -1,29 +1,33 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
-import { BlockCoinTransfer, BlockTransactionData, ScanOption, TransactionsByHash } from '../../commons/interfaces/index.js';
-import { initClient } from '../../commons/utils/blockchain.js';
+
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+
 import {
-  chunkArray,
-  chunkArrayReturnHex,
-  sleep,
-} from '../../commons/utils/index.js';
+  BlockCoinTransfer,
+  BlockTransactionData,
+  ScanOption,
+  TransactionsByHash
+} from '../../commons/interfaces/index.js';
+import { initClient } from '../../commons/utils/blockchain.js';
+import { chunkArray, chunkArrayReturnHex, sleep } from '../../commons/utils/index.js';
 import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 import { Web3Client } from '../../commons/utils/web3-client.js';
-import { BLOCKS_RECOVER_ORPHAN, PROCESS_TIMEOUT_IN_MS, SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
+import {
+  BLOCKS_RECOVER_ORPHAN,
+  PROCESS_TIMEOUT_IN_MS,
+  SECONDS_TO_MILLISECONDS
+} from '../../config/constants.js';
 import {
   EventEntity,
   EventMessageEntity,
   NetworkEntity,
-  ProcessedBlockEntity,
+  ProcessedBlockEntity
 } from '../../entities/index.js';
 import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
+import { CacheManagerService } from '../../commons/cache-manager/cache-manager.service.js';
 
 export interface ScanResult {
   longSleep: boolean;
@@ -42,7 +46,7 @@ export class ProcessedBlockService {
     private eventMsgService: EventMessageService,
     @Inject(forwardRef(() => NetworkService))
     private networkService: NetworkService,
-
+    private readonly cacheManager: CacheManagerService,
   ) {
     this.web3Client = new Web3Client({});
   }
@@ -108,8 +112,10 @@ export class ProcessedBlockService {
     topics: string[],
     scanRangeNo: number,
   ) {
-    const registedEvents = await this.eventService.getEventsByChain(scanOptions.chain_id);
-
+    const registedEvents = await this.cacheManager.findOrCache(
+      this.eventService.getEventsByChain.bind(null, scanOptions.chain_id),
+      `EventsByChain.${scanOptions.chain_id}`
+    );
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
@@ -150,7 +156,10 @@ export class ProcessedBlockService {
         return { longSleep: false };
       }
 
-      const topics = await this.eventService.getTopicsByChainId(scanOptions.chain_id);
+      const topics = await this.cacheManager.findOrCache(
+        this.eventService.getTopicsByChainId.bind(null, scanOptions.chain_id),
+        `TopicsByChainId.${scanOptions.chain_id}`
+      );
       if (topics.length === 0) {
         console.info(`Event topic not found on ${network.chain_id} network`);
         return { longSleep: false };

@@ -7,10 +7,15 @@ import { EventsService } from '../../apis/events/events.service.js';
 import { contractEvents as contractEventsDev } from './dev/events/events.js';
 import { contractEvents as contractEventsProd } from './prod/events/events.js';
 import { Env } from '../../commons/enums/index.js';
+import { CacheManagerService } from '../../commons/cache-manager/cache-manager.service.js';
 
 @Command({ name: 'seed:events', description: 'Register contract events' })
 export class EventSeed extends CommandRunner {
-  constructor(private readonly eventService: EventsService) {
+
+  constructor(
+    private readonly eventService: EventsService,
+    private readonly cacheManager: CacheManagerService,
+  ) {
     super();
   }
 
@@ -36,8 +41,16 @@ export class EventSeed extends CommandRunner {
           contract_addresses: contractAddresses,
           routing_key: routingKey,
         });
+        await this._clearCache(chainId);
       }
     }
+  }
+
+  private async _clearCache(chainId: number) {
+    const clearedEventByChain = await this.cacheManager.delete(`EventsByChain.${chainId}`);
+    console.info(`Cleared cache for EventsByChain.${chainId}: ${clearedEventByChain}`);
+    const clearedTopicByChain = await this.cacheManager.delete(`TopicsByChainId.${chainId}`);
+    console.info(`Cleared cache for TopicsByChainId.${chainId}: ${clearedTopicByChain}`);
   }
 
   @Option({

@@ -3,29 +3,28 @@ import './mock-rabbitmq-spec.event-message';
 import '../../../test/utils/mock-eventmq.module';
 import '../../commons/utils/bigint-monkey-patching.js';
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { when } from 'jest-when';
 import { DataSource } from 'typeorm';
-import { ProcessedBlockService } from './processed-block.service.js';
-import {
-  getSynchronizeConnection,
-  clearDB,
-  IMPORT_MODULES,
-} from '../../../test/utils.js';
-import { EventsService } from '../events/events.service.js';
-import { EventEntity } from '../../entities/event.entity.js';
+
+import { Test, TestingModule } from '@nestjs/testing';
+
 import {
   airdropCreatedPayload,
   coinTransferPayload,
   communityCreatedPayload,
-  traceBlock_97_400000,
+  traceBlock_97_400000
 } from '../../../test/fixtures/index.js';
-import { EventMessageService } from '../event-message/event-message.service.js';
-import { ProcessedBlockEntity } from '../../entities/processed-block.entity.js';
-import { NetworkEntity } from '../../entities/network.entity.js';
+import { clearDB, getSynchronizeConnection, IMPORT_MODULES } from '../../../test/utils.js';
 import { EventMessageEntity } from '../../entities/event-message.entity.js';
-import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module';
+import { EventEntity } from '../../entities/event.entity.js';
+import { NetworkEntity } from '../../entities/network.entity.js';
+import { ProcessedBlockEntity } from '../../entities/processed-block.entity.js';
+import { EventMessageService } from '../event-message/event-message.service.js';
+import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
-import { when } from 'jest-when';
+import { ProcessedBlockService } from './processed-block.service.js';
+import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module';
+import { CacheManagerModule } from '../../commons/cache-manager/cache-manager.module.js';
 import { _getTraceBlockRequestPayload, fnGetBlock, fnGetBlockNumber, mockFetch } from './mock-web3-spec.processed-block.js';
 
 describe('ProcessedBlockService', () => {

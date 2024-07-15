@@ -1,4 +1,4 @@
-import { DataSource, DataSourceOptions, QueryRunner } from 'typeorm';
+import { BaseEntity, DataSource, DataSourceOptions, QueryRunner } from 'typeorm';
 // import * as path from 'path';
 import {
   EventEntity,
@@ -12,18 +12,19 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseTestConfigService } from '../src/config/database_test.config.js';
 import { contractEvents } from "../src/scripts/seeds/dev/events/events.js";
 import { getTopicFromEvent } from "../src/commons/utils/blockchain.js";
+import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { CacheManagerModule } from '../src/commons/cache-manager/cache-manager.module.js';
+import { RedisTestConfigService } from '../src/config/redis-test.config.js';
+import * as entitiesIndex from '../src/entities/index.js';
+
+const entities = Object.values(entitiesIndex).filter((entity: any) => BaseEntity.isPrototypeOf(entity));
 
 export async function getSynchronizeConnection() {
   const dataSource = new DataSource({
     name: 'default',
     type: 'postgres' as const,
     database: process.env.DB_NAME_TEST,
-    entities: [
-      EventEntity,
-      EventMessageEntity,
-      NetworkEntity,
-      ProcessedBlockEntity,
-    ],
+    entities: entities as any,
     synchronize: true,
   } as DataSourceOptions);
   await dataSource
@@ -50,7 +51,20 @@ export const IMPORT_MODULES = [
   TypeOrmModule.forRootAsync({
     imports: [ConfigModule],
     useClass: DatabaseTestConfigService,
-  })
+  }),
+  ConfigModule.forRoot({
+    isGlobal: true,
+    load: [configuration],
+  }),
+  TypeOrmModule.forRootAsync({
+    imports: [ConfigModule],
+    useClass: DatabaseTestConfigService,
+  }),
+  RedisModule.forRootAsync({
+    imports: [ConfigModule],
+    useClass: RedisTestConfigService,
+  }),
+  CacheManagerModule,
 ];
 
 export async function seedTestEvents(queryRunner: QueryRunner) {

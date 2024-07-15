@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class RedisConfigService implements RedisOptionsFactory {
+export class RedisTestConfigService implements RedisOptionsFactory {
   constructor(private readonly configService: ConfigService) {}
 
   createRedisOptions(): RedisModuleOptions {
@@ -12,7 +12,7 @@ export class RedisConfigService implements RedisOptionsFactory {
       config: {
         host: this.configService.get('redis.host'),
         port: this.configService.get('redis.port'),
-        keyPrefix: 'eventmq:',
+        keyPrefix: 'eventmq-test:',
       },
     };
   }

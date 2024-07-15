@@ -38,8 +38,6 @@ export class NetworkService {
     }
     const nodeStatuses = await Promise.all(nodeCheckPromises);
     const availableNodes = nodeStatuses.filter((node) => node.isAvailable);
-    console.log("🚀 ~ NetworkService ~ pickAndUpdateAvailableNode ~ availableNodes:", availableNodes)
-
     if (availableNodes.length > 0) {
       const randomNodeIndex = Math.floor(Math.random() * availableNodes.length);
       network.http_url = availableNodes[randomNodeIndex].url;
