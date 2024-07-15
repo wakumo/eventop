@@ -4,8 +4,8 @@ import { ProcessedBlockService, ScanResult } from '../../apis/processed-block/pr
 import { SECONDS_TO_MILLISECONDS } from "../../config/constants.js";
 import { ScanOption } from '../../commons/interfaces/index.js';
 
-const SHORT_SLEEP = 0.1;
-const LONG_SLEEP = 15 * SECONDS_TO_MILLISECONDS; // 15 seconds in milliseconds
+const SHORT_SLEEP = Number(process.env.SHORT_SLEEP || 1 * SECONDS_TO_MILLISECONDS); // 0.1 seconds in milliseconds
+const LONG_SLEEP = Number(process.env.LONG_SLEEP || 15 * SECONDS_TO_MILLISECONDS); // 15 seconds in milliseconds
 
 @Command({
   name: 'job:scan_events',

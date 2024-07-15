@@ -12,9 +12,9 @@ export const configuration = () => {
     "db.name_test": process.env.DB_NAME_TEST,
     "db.logger_options": ['schema', 'warn', 'error', 'migration'],
 
-    //redis config
-    // "redis.host": process.env.REDIS_HOST,
-    // "redis.port": process.env.REDIS_PORT,
+    // redis config
+    "redis.host": process.env.REDIS_HOST,
+    "redis.port": process.env.REDIS_PORT,
 
     // rabbitmq config
     "rabbitmq.host": process.env.RABBITMQ_HOST,
