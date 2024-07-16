@@ -10,24 +10,26 @@ import { COIN_TRANSFER_EVENT } from '../../config/constants.js';
 
 @Injectable()
 export class EventMessageService {
+  private readonly web3: Web3;
+
   constructor(
     private connection: DataSource,
     private readonly producer: EventMqProducer
-  ) { }
+  ) {
+    // Any https provider is fine. Just put to avoid raise warning
+    // Decode no need to connect to blockchain
+    this.web3 = new Web3(new Web3.providers.HttpProvider('https://rpc.ankr.com/eth'));
+  }
 
   createEventMessage(
     event: EventEntity,
     log: string | LogData,
     blockData: BlockTransactionData,
   ) {
-    // Any https provider is fine. Just put to avoid raise warning
-    // Decode no need to connect to blockchain
-    const web3 = new Web3(new Web3.providers.HttpProvider('https://rpc.ankr.com/eth'));
     let payload = {};
-
     // Return and not raise error if got decodeLog error
     try {
-      payload = web3.eth.abi.decodeLog(
+      payload = this.web3.eth.abi.decodeLog(
         JSON.parse(event.abi).inputs,
         log['data'],
         log['topics'],
@@ -35,6 +37,7 @@ export class EventMessageService {
     } catch (error) {
       return null;
     }
+
     const transactionHash = log['transactionHash'].toLowerCase();
     try {
       let from, to;

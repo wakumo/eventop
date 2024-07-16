@@ -116,6 +116,7 @@ export class ProcessedBlockService {
       this.eventService.getEventsByChain.bind(null, scanOptions.chain_id),
       `EventsByChain.${scanOptions.chain_id}`
     );
+
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
@@ -242,7 +243,6 @@ export class ProcessedBlockService {
     try {
       const client = initClient(nodeUrl);
       const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
-
       const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
 
       if (!isRescan) { await this._handleOrphanBlock(chainId, firstBlockData); }
@@ -301,11 +301,6 @@ export class ProcessedBlockService {
     return [firstBlockData, latestBlockData];
   }
 
-  /**
-   * Process logs and create event messages.
-   *
-   * @returns {EventMessageEntity[]} - The event messages created from the logs.
-   */
   private async _processContractEvents(
     client: Web3,
     blockRange: number[],
@@ -315,21 +310,22 @@ export class ProcessedBlockService {
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
   ): Promise<EventMessageEntity[]> {
     const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
-    let eventMessages = [];
-
-    for (const log of logs) {
+    const eventMessages: EventMessageEntity[][] = await Promise.all(logs.map(async (log) => {
       const topic = log['topics'][0];
-      const events = registedEvents.filter(
+
+      const relevantEvents = registedEvents.filter(
         (event) => event.event_topic === topic && event.chain_id === chainId
       );
+      const messages = await Promise.all(relevantEvents.map(async (event) => {
+        return this.eventMsgService.createEventMessage(event, log, blockDataMap[log['blockNumber']]);
+      }));
 
-      events.map((event) => {
-        const newMessage = this.eventMsgService.createEventMessage(event, log, blockDataMap[log['blockNumber']]);
-        if (newMessage !== null) { eventMessages.push(newMessage); }
-      });
-    }
+      return messages.filter((msg) => msg !== null);
+    }));
 
-    return eventMessages;
+    const flattenedMessages = eventMessages.flat();
+
+    return flattenedMessages;
   }
 
   private async _processCoinTransferEvents(
