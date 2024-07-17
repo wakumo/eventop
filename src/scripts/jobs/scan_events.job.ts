@@ -1,11 +1,15 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { sleep } from '../../commons/utils/index.js';
-import { ProcessedBlockService, ScanResult } from '../../apis/processed-block/processed-block.service.js';
-import { SECONDS_TO_MILLISECONDS } from "../../config/constants.js";
-import { ScanOption } from '../../commons/interfaces/index.js';
 
-const SHORT_SLEEP = Number(process.env.SHORT_SLEEP || 1 * SECONDS_TO_MILLISECONDS); // 0.1 seconds in milliseconds
-const LONG_SLEEP = Number(process.env.LONG_SLEEP || 15 * SECONDS_TO_MILLISECONDS); // 15 seconds in milliseconds
+import {
+  ProcessedBlockService,
+  ScanResult
+} from '../../apis/processed-block/processed-block.service.js';
+import { ScanOption } from '../../commons/interfaces/index.js';
+import { sleep } from '../../commons/utils/index.js';
+import { SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
+
+const SHORT_SLEEP = Number(process.env.SHORT_SLEEP || 1) * SECONDS_TO_MILLISECONDS;
+const LONG_SLEEP = Number(process.env.LONG_SLEEP || 15) * SECONDS_TO_MILLISECONDS; // default 15 seconds in milliseconds
 
 @Command({
   name: 'job:scan_events',
