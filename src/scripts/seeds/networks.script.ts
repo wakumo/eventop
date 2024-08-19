@@ -35,11 +35,11 @@ const networks: Network[] = [
   },
   {
     chain_id: 80001,
-    http_url: 'https://rpc.ankr.com/polygon_mumbai',
+    http_url: 'https://polygon-mumbai.api.onfinality.io/public',
   },
   {
     chain_id: 5,
-    http_url: 'https://rpc.ankr.com/eth_goerli',
+    http_url: 'https://eth-goerli.public.blastapi.io',
   },
 ];
 

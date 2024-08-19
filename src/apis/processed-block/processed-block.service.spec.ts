@@ -50,7 +50,7 @@ describe('ProcessedBlockService', () => {
     await EventEntity.create({ ...airdropCreatedPayload }).save();
     await EventEntity.create({ ...coinTransferPayload }).save();
 
-    await NetworkEntity.create({ chain_id: 97, http_url: 'https://rpc.ankr.com/bsc_testnet_chapel' }).save();
+    await NetworkEntity.create({ chain_id: 97, http_url: 'https://data-seed-prebsc-1-s3.bnbchain.org:8545' }).save();
     proccessedBlock = await ProcessedBlockEntity.create({
       chain_id: 97,
       block_no: 24639370,
@@ -111,7 +111,7 @@ describe('ProcessedBlockService', () => {
     beforeEach(async () => {
       await ProcessedBlockEntity.update(proccessedBlock.id, { block_no: 399999 });
       when(fnGetBlockNumber).mockReturnValue(400000);
-      when(mockFetch).calledWith('https://rpc.ankr.com/bsc_testnet_chapel', _getTraceBlockRequestPayload(400000)).mockResolvedValue({
+      when(mockFetch).calledWith('https://data-seed-prebsc-1-s3.bnbchain.org:8545', _getTraceBlockRequestPayload(400000)).mockResolvedValue({
         json: () => Promise.resolve(traceBlock_97_400000),
       });
       when(fnGetBlock).calledWith(expect.any(Number)).mockImplementation((blockNo) => {

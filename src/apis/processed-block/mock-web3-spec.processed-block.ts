@@ -16,7 +16,7 @@ export const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
 // Mock eth_getBlockByNumber, eth_getBlockReceipts for any block number
-when(mockFetch).calledWith('https://rpc.ankr.com/bsc_testnet_chapel', _getTraceBlockRequestPayload()).mockResolvedValue({
+when(mockFetch).calledWith('https://data-seed-prebsc-1-s3.bnbchain.org:8545', _getTraceBlockRequestPayload()).mockResolvedValue({
   json: () => Promise.resolve({ result: [] }),
 });
 

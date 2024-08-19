@@ -3,7 +3,7 @@ import { initClient } from '../commons/utils/blockchain.js';
 import Web3 from 'web3';
 
 async function main() {
-  // const client = initClient('https://rpc.ankr.com/bsc');
+  // const client = initClient('https://binance.llamarpc.com');
   // const blockData = await client.eth.getBlock(37531659);
   // console.log("🚀 ~ main ~ blockData:", blockData);
 
