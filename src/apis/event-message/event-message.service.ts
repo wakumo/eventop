@@ -94,7 +94,7 @@ export class EventMessageService {
   async sendPendingMessages(): Promise<void> {
     const pendingMessages = await EventMessageEntity.find({
       where: { status: EventMessageStatus.PENDING },
-      relations: ["event"], skip: 0, take: 1000,
+      relations: ["event"], skip: 0, take: 5000,
       order: {
         block_no: "ASC"
       }
