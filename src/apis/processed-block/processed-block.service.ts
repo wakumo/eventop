@@ -116,18 +116,13 @@ export class ProcessedBlockService {
       this.eventService.getEventsByChain.bind(null, scanOptions.chain_id),
       `EventsByChain.${scanOptions.chain_id}`
     );
-
-    const queryRunner = this.connection.createQueryRunner();
-    await queryRunner.connect();
+    const [fromBlock, toBlock] = await this._getBlockRange(nodeUrl, scanOptions);
+    const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
+    const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
 
     try {
-      const [fromBlock, toBlock] = await this._getBlockRange(nodeUrl, scanOptions);
-      const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
-      const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
-
       for (const blockRange of blockRangeChunks) {
         await this._processBlockRange(
-          queryRunner,
           scanOptions.chain_id,
           nodeUrl,
           blockRange,
@@ -139,9 +134,7 @@ export class ProcessedBlockService {
       }
       return { longSleep: false }
     } catch (error) {
-      throw error;
-    } finally {
-      await queryRunner.release();
+      return { longSleep: true }
     }
   }
 
@@ -226,7 +219,6 @@ export class ProcessedBlockService {
    * @param {EventEntity[]} registedEvents - The registered events for the chain.
    */
   private async _processBlockRange(
-    queryRunner: QueryRunner,
     chainId: number,
     nodeUrl: string,
     blockRange: number[],
@@ -237,16 +229,21 @@ export class ProcessedBlockService {
     console.info(
       `${new Date()} [ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`
     );
+    console.info(`${new Date()} - initing client`);
+    const client = initClient(nodeUrl);
+    console.info(`${new Date()} - getting bulk blocks data`);
+    const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
+    console.info(`${new Date()} - got bulk blocks data`);
+    const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
+    console.info(`${new Date()} - firstBlockData: ${firstBlockData.number}, latestBlockData: ${latestBlockData.number}`);
+    if (!isRescan) { await this._handleOrphanBlock(chainId, firstBlockData); }
 
-    await queryRunner.startTransaction();
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+    console.info(`${new Date()} - starting transaction`);
 
     try {
-      const client = initClient(nodeUrl);
-      const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
-      const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
-
-      if (!isRescan) { await this._handleOrphanBlock(chainId, firstBlockData); }
-
+      await queryRunner.startTransaction();
       const coinTransferMessages = await this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap);
       const contractEventMessages = await this._processContractEvents(client, blockRange, topics, registedEvents, chainId, blockDataMap);
 
@@ -265,6 +262,8 @@ export class ProcessedBlockService {
       console.error(`${new Date()} - Error while scanning block: ${error}`);
       await queryRunner.rollbackTransaction();
       throw error; // Rethrow the error to stop further processing
+    } finally {
+      await queryRunner.release();
     }
   }
 
