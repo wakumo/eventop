@@ -12,7 +12,7 @@ import {
 import { initClient } from '../../commons/utils/blockchain.js';
 import { chunkArray, chunkArrayReturnHex, sleep } from '../../commons/utils/index.js';
 import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
-import { Web3Client } from '../../commons/utils/web3-client.js';
+import { RetryManager } from '../../commons/utils/retry-manager.js';
 import {
   BLOCKS_RECOVER_ORPHAN,
   PROCESS_TIMEOUT_IN_MS,
@@ -36,7 +36,7 @@ export interface ScanResult {
 
 @Injectable()
 export class ProcessedBlockService {
-  private web3Client: Web3Client;
+  private readonly retryManager: RetryManager;
 
   constructor(
     private connection: DataSource,
@@ -48,7 +48,7 @@ export class ProcessedBlockService {
     private networkService: NetworkService,
     private readonly cacheManager: CacheManagerService,
   ) {
-    this.web3Client = new Web3Client({});
+    this.retryManager = new RetryManager({});
   }
 
   /**
@@ -89,13 +89,12 @@ export class ProcessedBlockService {
     if (scanOptions.from_block && scanOptions.to_block) {
       return [scanOptions.from_block, scanOptions.to_block];
     }
-
-    const client = initClient(nodeUrl);
     // Get the next block number to scan from the database
     const latestProcessedBlock = await this._getLatestScannedBlock(scanOptions.chain_id);
     const nextBlockNo = latestProcessedBlock ? latestProcessedBlock.block_no + 1 : null;
     // Get the current block number from the blockchain
-    const currentBlockNo = await client.eth.getBlockNumber();
+    const rpcClient = new JsonRpcClient(nodeUrl);
+    const currentBlockNo = await rpcClient.getCurrentBlock();
 
     // Calculate the starting block number based on the next block or current block
     let fromBlock = nextBlockNo || Number(currentBlockNo.toString());
@@ -229,10 +228,8 @@ export class ProcessedBlockService {
     console.info(
       `${new Date()} [ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`
     );
-    console.info(`${new Date()} - initing client`);
-    const client = initClient(nodeUrl);
     console.info(`${new Date()} - getting bulk blocks data`);
-    const blockDataMap = await this.getBulkBlocksData(client, blockRange[0], blockRange[1]);
+    const blockDataMap = await this.getBulkBlocksData(nodeUrl, blockRange[0], blockRange[1]);
     console.info(`${new Date()} - got bulk blocks data`);
     const [firstBlockData, latestBlockData] = this._getFirstAndLastBlockNo(blockDataMap);
     console.info(`${new Date()} - firstBlockData: ${firstBlockData.number}, latestBlockData: ${latestBlockData.number}`);
@@ -245,7 +242,7 @@ export class ProcessedBlockService {
     try {
       await queryRunner.startTransaction();
       const coinTransferMessages = await this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap);
-      const contractEventMessages = await this._processContractEvents(client, blockRange, topics, registedEvents, chainId, blockDataMap);
+      const contractEventMessages = await this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap);
 
       const messages = [...contractEventMessages, ...coinTransferMessages];
       if (messages.length !== 0) {
@@ -301,13 +298,14 @@ export class ProcessedBlockService {
   }
 
   private async _processContractEvents(
-    client: Web3,
+    nodeUrl: string,
     blockRange: number[],
     topics: string[],
     registedEvents: any[],
     chainId: number,
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
   ): Promise<EventMessageEntity[]> {
+    const client = initClient(nodeUrl);
     const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
     const eventMessages: EventMessageEntity[][] = await Promise.all(logs.map(async (log) => {
       const topic = log['topics'][0];
@@ -442,12 +440,13 @@ export class ProcessedBlockService {
       topics: [topics],
     });
 
-    return await this.web3Client.call(getLogsPromise);
+    return await this.retryManager.call(getLogsPromise);
   }
 
-  private async _getBlock(client: Web3, blockNo: number, isVerbose: boolean = true): Promise<BlockTransactionData> {
+  private async _getBlock(nodeUrl: string, blockNo: number, isVerbose: boolean = true): Promise<BlockTransactionData> {
+    const client = initClient(nodeUrl);
     const getBlockPromise = client.eth.getBlock(blockNo, isVerbose);
-    const blockResponse = await this.web3Client.call(getBlockPromise);
+    const blockResponse = await this.retryManager.call(getBlockPromise);
     this._addTransactionsByHashToBlockData(blockResponse);
     return blockResponse;
   }
@@ -469,14 +468,14 @@ export class ProcessedBlockService {
   }
 
   async getBulkBlocksData(
-    client: Web3,
+    nodeUrl: string,
     fromBlock: number,
     toBlock: number
   ): Promise<{ [blockNo: number]: BlockTransactionData }> {
     const blockDataMap: { [blockNo: number]: BlockTransactionData } = {};
 
     const fetchBlockData = async (blockNo: number): Promise<void> => {
-      const blockInfo = await this._getBlock(client, blockNo);
+      const blockInfo = await this._getBlock(nodeUrl, blockNo);
       blockDataMap[blockNo] = {
         number: BigInt(blockInfo.number),
         timestamp: BigInt(blockInfo.timestamp),

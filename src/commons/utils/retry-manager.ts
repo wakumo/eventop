@@ -10,7 +10,7 @@ export interface Web3ClientOptions {
   retrySchedule?: number[]
 }
 
-export class Web3Client {
+export class RetryManager {
   private retrySchedule: number[];
 
   constructor(options: Web3ClientOptions) {
@@ -26,12 +26,12 @@ export class Web3Client {
       return result;
     } catch (ex) {
       console.error(ex);
-      if (retries > this.retrySchedule.length) {
+      if (retries >= this.retrySchedule.length) {
         throw new Web3RateLimitExceededException();
       }
       if (isRateLimitError(ex)) {
         await sleep(this.retrySchedule[retries]);
-        return this.call(promiseFunc, ++retries);
+        return this.call(promiseFunc, retries+1);
       } else {
         throw ex;
       }

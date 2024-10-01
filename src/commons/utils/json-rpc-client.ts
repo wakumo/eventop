@@ -14,6 +14,12 @@ export class JsonRpcClient {
     return await this.request(requestPayload);
   }
 
+  async getCurrentBlock() {
+    const requestPayload = this.requestPayload("eth_blockNumber");
+    const result = await this.request(requestPayload);
+    return parseInt(result, 16);
+  }
+
   private async request(requestPayload: any) {
     const requestOptions = { method: 'POST', headers: this.myHeaders, body: requestPayload, redirect: "follow" as RequestRedirect };
     const responses = await fetch(this.nodeUrl, requestOptions);

@@ -23,9 +23,9 @@ import { EventMessageService } from '../event-message/event-message.service.js';
 import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
 import { ProcessedBlockService } from './processed-block.service.js';
-import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module';
-import { CacheManagerModule } from '../../commons/cache-manager/cache-manager.module.js';
+import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module.js';
 import { _getTraceBlockRequestPayload, fnGetBlock, fnGetBlockNumber, mockFetch } from './mock-web3-spec.processed-block.js';
+import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 
 describe('ProcessedBlockService', () => {
   let service: ProcessedBlockService;
@@ -70,6 +70,9 @@ describe('ProcessedBlockService', () => {
   });
 
   it('should be scan CommunityCreated and AirdropCreated events', async () => {
+    jest.spyOn(JsonRpcClient.prototype, 'getCurrentBlock').mockImplementation(async () => {
+      return 24639471;
+    });
     await service.scanBlockEvents({ chain_id: 97 });
     const messages = await EventMessageEntity.find();
     const processedBlock = await ProcessedBlockEntity.createQueryBuilder(
@@ -110,7 +113,9 @@ describe('ProcessedBlockService', () => {
   describe('Detect coin transfer in contract interaction', () => {
     beforeEach(async () => {
       await ProcessedBlockEntity.update(proccessedBlock.id, { block_no: 399999 });
-      when(fnGetBlockNumber).mockReturnValue(400000);
+      jest.spyOn(JsonRpcClient.prototype, 'getCurrentBlock').mockImplementation(async () => {
+        return 400000;
+      });
       when(mockFetch).calledWith('https://data-seed-prebsc-1-s3.bnbchain.org:8545', _getTraceBlockRequestPayload(400000)).mockResolvedValue({
         json: () => Promise.resolve(traceBlock_97_400000),
       });
