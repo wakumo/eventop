@@ -241,9 +241,11 @@ export class ProcessedBlockService {
 
     try {
       await queryRunner.startTransaction();
+      console.info(`${new Date()} - processing coin transfer events`);
       const coinTransferMessages = await this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap);
+      console.info(`${new Date()} - processing contract events`);
       const contractEventMessages = await this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap);
-
+      console.info(`${new Date()} - saving event messages`);
       const messages = [...contractEventMessages, ...coinTransferMessages];
       if (messages.length !== 0) {
         await queryRunner.manager.save(messages, { chunk: 200 });
@@ -306,7 +308,9 @@ export class ProcessedBlockService {
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
   ): Promise<EventMessageEntity[]> {
     const client = initClient(nodeUrl);
+    console.info(`${new Date()} - scanning event by topics`);
     const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
+    console.info(`${new Date()} - got logs`);
     const eventMessages: EventMessageEntity[][] = await Promise.all(logs.map(async (log) => {
       const topic = log['topics'][0];
 
