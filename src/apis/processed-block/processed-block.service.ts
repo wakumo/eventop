@@ -480,7 +480,7 @@ export class ProcessedBlockService {
     const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
       return Promise.race([
         promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout exceeded")), timeoutMs))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("[ISE] Timeout exceeded")), timeoutMs))
       ]);
     };
     const fetchBlockData = async (blockNo: number): Promise<void> => {
