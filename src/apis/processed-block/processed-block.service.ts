@@ -477,9 +477,14 @@ export class ProcessedBlockService {
     toBlock: number
   ): Promise<{ [blockNo: number]: BlockTransactionData }> {
     const blockDataMap: { [blockNo: number]: BlockTransactionData } = {};
-
+    const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout exceeded")), timeoutMs))
+      ]);
+    };
     const fetchBlockData = async (blockNo: number): Promise<void> => {
-      const blockInfo = await this._getBlock(nodeUrl, blockNo);
+      const blockInfo = await withTimeout(this._getBlock(nodeUrl, blockNo), 10000); // 10-second timeout
       blockDataMap[blockNo] = {
         number: BigInt(blockInfo.number),
         timestamp: BigInt(blockInfo.timestamp),
