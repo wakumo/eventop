@@ -190,9 +190,9 @@ export const contractEvents = [
   },
   {
     "service_name": "luckypool",
-    "name": "LuckyPoolCreated(address,uint256,uint256,uint256,uint256,uint256)",
+    "name": "LuckyPoolCreated(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address,bytes16)",
     "routing_key": "luckypool.events.luckypool.luckypool_created",
-    "abi":'{"anonymous": false,"inputs": [{ "indexed": false, "internalType": "address", "name": "poolAddress", "type": "address" },{ "indexed": false, "internalType": "uint256", "name": "perRewardAmount", "type": "uint256" },{ "indexed": false, "internalType": "uint256", "name": "totalWinners", "type": "uint256" },{ "indexed": false, "internalType": "uint256", "name": "endTime", "type": "uint256" },{ "indexed": false, "internalType": "uint256", "name": "totalPools", "type": "uint256" },{ "indexed": false, "internalType": "uint256", "name": "_msgValue", "type": "uint256" }],"name": "LuckyPoolCreated","type": "event" }',
+    "abi":'{"anonymous": false,"inputs": [{ "indexed": false, "internalType": "address", "name": "poolAddress", "type": "address" },{ "indexed": false, "internalType": "uint256", "name": "perRewardAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "totalWinners", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "startTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "endTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "totalPools", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "_msgValue", "type": "uint256" }, { "indexed": false, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": false, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "bytes16", "name": "uuid", "type": "bytes16" } ], "name": "LuckyPoolCreated", "type": "event" }',
     "chain_ids": [97, 80001]
   },
   
