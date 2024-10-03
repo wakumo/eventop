@@ -34,6 +34,13 @@ export interface ScanResult {
   error?: any;
 }
 
+const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("[ISE] Timeout exceeded")), timeoutMs))
+  ]);
+};
+
 @Injectable()
 export class ProcessedBlockService {
   private readonly retryManager: RetryManager;
@@ -477,12 +484,6 @@ export class ProcessedBlockService {
     toBlock: number
   ): Promise<{ [blockNo: number]: BlockTransactionData }> {
     const blockDataMap: { [blockNo: number]: BlockTransactionData } = {};
-    const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("[ISE] Timeout exceeded")), timeoutMs))
-      ]);
-    };
     const fetchBlockData = async (blockNo: number): Promise<void> => {
       const blockInfo = await withTimeout(this._getBlock(nodeUrl, blockNo), 10000); // 10-second timeout
       blockDataMap[blockNo] = {
@@ -516,12 +517,12 @@ export class ProcessedBlockService {
 
     for (let chunkIndex = 0; chunkIndex < hexChunks.length; chunkIndex++) {
       getLogsPromises.push(
-        this.scanEventByTopicsByBlockHexs(
+        withTimeout(this.scanEventByTopicsByBlockHexs(
           client,
           hexChunks[chunkIndex][0],
           hexChunks[chunkIndex][1],
           topics
-        )
+        ), 10_000)
       );
     }
     const logsNestedArray = await Promise.all(getLogsPromises);
