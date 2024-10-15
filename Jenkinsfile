@@ -6,7 +6,7 @@ pipeline {
     }
     agent any
     stages {
-      
+
       stage('Cloning Git') {
         // when {branch 'develop'}
         steps {
@@ -38,12 +38,12 @@ pipeline {
         steps{
           script{
             withKubeConfig(credentialsId: 'wkm_local_credential_deploy', namespace: 'avacuscc', serverUrl: 'https://10.123.31.100:6443') {
-              sh 'curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl"'  
-              sh 'chmod u+x ./kubectl'  
-              
+              sh 'curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/linux/amd64/kubectl"'
+              sh 'chmod u+x ./kubectl'
+
               sh './kubectl apply -f .kube/development/events-mq-deployment.yml'
               sh './kubectl rollout restart deployment/events-mq-deployment'
-              
+
               sh './kubectl apply -f .kube/development/events-mq-job.yml'
               sh './kubectl delete -f .kube/development/events-mq-job.yml'
               sh './kubectl apply -f .kube/development/events-mq-job.yml'
@@ -55,7 +55,7 @@ pipeline {
     post {
        // only triggered when blue or green sign
        success {
-           slackSend channel: 'avacuscc-jenkins-notification-dev', message: "[events-mq] git-commit {${GIT_COMMIT}} has been deployed!!!", color: '#1ddb46'
+           slackSend channel: 'avacuscc-jenkins-notification-dev', message: "[events-mq] git-commit {${GIT_COMMIT}} has been deployed, View scan analysis results here: http://118.69.160.39:9000/dashboard?id=avacuscc-events-mq", color: '#1ddb46'
        }
        // triggered when red sign
        failure {
