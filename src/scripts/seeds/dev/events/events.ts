@@ -188,12 +188,13 @@ export const contractEvents = [
     "abi": '{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "reserve","type": "address"},{"indexed": false,"internalType": "uint256","name": "liquidityRate","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "stableBorrowRate","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "variableBorrowRate","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "liquidityIndex","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "variableBorrowIndex","type": "uint256"}],"name": "ReserveDataUpdated","type": "event"}',
     "chain_ids": [97, 80001]
   },
+  /* ======= LUCKY POOL ======= */
   {
     "service_name": "luckypool",
-    "name": "LuckyPoolCreated(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address,bytes16)",
+    "name": " LuckyPoolCreated(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address,bytes16)",
     "routing_key": "luckypool.events.luckypool.luckypool_created",
-    "abi":'{"anonymous": false,"inputs": [{ "indexed": false, "internalType": "address", "name": "poolAddress", "type": "address" },{ "indexed": false, "internalType": "uint256", "name": "perRewardAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "totalWinners", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "startTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "endTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "totalPools", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "_msgValue", "type": "uint256" }, { "indexed": false, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": false, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "bytes16", "name": "uuid", "type": "bytes16" } ], "name": "LuckyPoolCreated", "type": "event" }',
-    "chain_ids": [97, 80001]
+    "abi":'{ "anonymous": false, "inputs": [ { "indexed": false, "internalType": "address", "name": "poolAddress", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "perRewardAmount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "totalWinners", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "startTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "endTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "totalPools", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "_msgValue", "type": "uint256" }, { "indexed": false, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": false, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "bytes16", "name": "uuid", "type": "bytes16" } ], "name": "LuckyPoolCreated", "type": "event" }',
+    "chain_ids": [97, 137]
   },
   
   {
@@ -201,7 +202,7 @@ export const contractEvents = [
     "name": "ParticipantJoined(address)",
     "routing_key": "luckypool.events.luckypool.participant_joined",
     "abi":'{"anonymous": false,"inputs": [{ "indexed": false, "internalType": "address", "name": "participant", "type": "address" }],"name": "ParticipantJoined","type": "event" }',
-    "chain_ids": [97, 80001]
+    "chain_ids": [97, 137]
   },
   
   {
@@ -209,7 +210,7 @@ export const contractEvents = [
     "name": "WinnerSelected(address)",
     "routing_key": "luckypool.events.luckypool.winner_selected",
     "abi":'{"anonymous": false,"inputs": [{ "indexed": false, "internalType": "address", "name": "winner", "type": "address" }],"name": "WinnerSelected","type": "event" }',
-    "chain_ids": [97, 80001]
+    "chain_ids": [97, 137]
   },
   
   {
@@ -217,6 +218,6 @@ export const contractEvents = [
     "name": "WinnerClaimed(address,uint256,uint256)",
     "routing_key": "luckypool.events.luckypool.winner_claimed",
     "abi":'{"anonymous": false,"inputs": [{ "indexed": false, "internalType": "address", "name": "claimer", "type": "address" },{ "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },{ "indexed": false, "internalType": "uint256", "name": "claimedAt", "type": "uint256" }],"name": "WinnerClaimed","type": "event" }',
-    "chain_ids": [97, 80001]
+    "chain_ids": [97, 137]
   },
 ]
