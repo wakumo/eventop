@@ -8,25 +8,22 @@ import {
   clearDB,
   getSynchronizeConnection,
   IMPORT_MODULES,
-  seedTestEvents,
 } from '../../../test/utils.js';
 import { EventMessageService } from './event-message.service';
-import { DataSource, QueryRunner } from "typeorm";
+import { DataSource } from "typeorm";
 import { EventEntity, EventMessageEntity } from "../../entities";
 import { EventMessageStatus } from "../../commons/enums";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { EventMqMockModule } from "../../../test/utils/mock-eventmq.module";
+import { getTopicFromEvent } from "../../commons/utils/blockchain.js";
 
 describe('EventMessageService', () => {
   let service: EventMessageService;
   let connection: DataSource;
-  let queryRunner: QueryRunner;
   let amqpConnection: AmqpConnection;
 
   beforeEach(async () => {
     connection = await getSynchronizeConnection();
-    queryRunner = connection.createQueryRunner();
-    await queryRunner.connect();
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [...IMPORT_MODULES, EventMqMockModule],
@@ -35,12 +32,10 @@ describe('EventMessageService', () => {
 
     service = module.get<EventMessageService>(EventMessageService);
     amqpConnection = module.get<AmqpConnection>(AmqpConnection);
-    await seedTestEvents(queryRunner);
   });
 
   afterEach(async () => {
     await clearDB(connection)
-    await queryRunner.release();
   })
 
   it('should be defined', () => {
@@ -48,6 +43,22 @@ describe('EventMessageService', () => {
   });
 
   it("should send rabbitmq message", async () => {
+    const createdCampaignEvent = {
+      "service_name": "ctn",
+      "name": "CampaignCreated(bytes32,bytes16,address,address,address,uint8,uint256,uint256)",
+      "routing_key": "avacuscc.events.ctn.campaign.created",
+      "abi": { "anonymous": false, "inputs": [ { "indexed": false, "internalType": "bytes32", "name": "campaignId", "type": "bytes32" }, { "indexed": false, "internalType": "bytes16", "name": "salt", "type": "bytes16" }, { "indexed": false, "internalType": "address", "name": "creator", "type": "address" }, { "indexed": false, "internalType": "address", "name": "campaign", "type": "address" }, { "indexed": false, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "enum DataTypes.TOKEN_TYPE", "name": "tokenType", "type": "uint8" }, { "indexed": false, "internalType": "uint256", "name": "duration", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "adminFeePercent", "type": "uint256" } ], "name": "CampaignCreated", "type": "event" },
+      "chain_ids": [97, 80001]
+    }
+    const eventTopic = getTopicFromEvent(createdCampaignEvent.name);
+    await EventEntity.create({
+      service_name: createdCampaignEvent.service_name,
+      name: createdCampaignEvent.name,
+      routing_key: createdCampaignEvent.routing_key,
+      abi: JSON.stringify(createdCampaignEvent.abi),
+      event_topic: eventTopic,
+      chain_id: 97,
+    }).save();
     const event = await EventEntity.findOne({ where: { routing_key: 'avacuscc.events.ctn.campaign.created' } });
     const eventMessage = await EventMessageEntity.create({
       payload: `{"message": "test_message"}`,

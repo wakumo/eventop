@@ -4,7 +4,6 @@ import { DataSource } from 'typeorm';
 
 import { Injectable } from '@nestjs/common';
 
-import { CacheManagerService } from '../../commons/cache-manager/cache-manager.service.js';
 import { getABIInputsHash, getTopicFromEvent } from '../../commons/utils/blockchain.js';
 import { EventEntity } from '../../entities/index.js';
 import { CreateEventDto } from './dto/create-event.dto';

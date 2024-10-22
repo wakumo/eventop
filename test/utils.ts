@@ -1,17 +1,8 @@
 import { BaseEntity, DataSource, DataSourceOptions, QueryRunner } from 'typeorm';
-// import * as path from 'path';
-import {
-  EventEntity,
-  EventMessageEntity,
-  NetworkEntity,
-  ProcessedBlockEntity,
-} from '../src/entities/index.js';
 import { ConfigModule } from '@nestjs/config';
 import { configuration } from '../src/config/config.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseTestConfigService } from '../src/config/database_test.config.js';
-import { contractEvents } from "../src/scripts/seeds/dev/events/events.js";
-import { getTopicFromEvent } from "../src/commons/utils/blockchain.js";
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { CacheManagerModule } from '../src/commons/cache-manager/cache-manager.module.js';
 import { RedisTestConfigService } from '../src/config/redis-test.config.js';
@@ -66,19 +57,3 @@ export const IMPORT_MODULES = [
   }),
   CacheManagerModule,
 ];
-
-export async function seedTestEvents(queryRunner: QueryRunner) {
-  for (const event of contractEvents) {
-    for (const chainId of event.chain_ids) {
-      const eventTopic = getTopicFromEvent(event.name);
-      await queryRunner.manager.save(EventEntity, {
-        event_topic: eventTopic,
-        chain_id: chainId,
-        name: event.name,
-        abi: event.abi,
-        service_name: event.service_name,
-        routing_key: event.routing_key,
-      });
-    }
-  }
-}
