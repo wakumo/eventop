@@ -10,8 +10,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Relation,
+  OneToOne,
 } from 'typeorm';
-import { EventEntity } from './index.js';
+import { EventEntity, ProcessedBlockEntity } from './index.js';
 
 @Entity('networks')
 export class NetworkEntity extends BaseEntity {
@@ -48,6 +49,10 @@ export class NetworkEntity extends BaseEntity {
   @OneToMany(() => EventEntity, (event) => event.chain_id, { nullable: true })
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id' })
   events: Relation<EventEntity>[];
+
+  @OneToOne(() => ProcessedBlockEntity, (processed_block) => processed_block.chain_id, { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id', foreignKeyConstraintName: 'fk_networks_processed_blocks' })
+  processed_block: Relation<ProcessedBlockEntity>;
 
   @Expose()
   @CreateDateColumn()

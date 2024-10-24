@@ -46,7 +46,7 @@ describe('EventMessageService', () => {
     const createdCampaignEvent = {
       "service_name": "ctn",
       "name": "CampaignCreated(bytes32,bytes16,address,address,address,uint8,uint256,uint256)",
-      "routing_key": "avacuscc.events.ctn.campaign.created",
+      "routing_key": "eventop.events.ctn.campaign.created",
       "abi": { "anonymous": false, "inputs": [ { "indexed": false, "internalType": "bytes32", "name": "campaignId", "type": "bytes32" }, { "indexed": false, "internalType": "bytes16", "name": "salt", "type": "bytes16" }, { "indexed": false, "internalType": "address", "name": "creator", "type": "address" }, { "indexed": false, "internalType": "address", "name": "campaign", "type": "address" }, { "indexed": false, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "enum DataTypes.TOKEN_TYPE", "name": "tokenType", "type": "uint8" }, { "indexed": false, "internalType": "uint256", "name": "duration", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "adminFeePercent", "type": "uint256" } ], "name": "CampaignCreated", "type": "event" },
       "chain_ids": [97, 80001]
     }
@@ -59,7 +59,7 @@ describe('EventMessageService', () => {
       event_topic: eventTopic,
       chain_id: 97,
     }).save();
-    const event = await EventEntity.findOne({ where: { routing_key: 'avacuscc.events.ctn.campaign.created' } });
+    const event = await EventEntity.findOne({ where: { routing_key: 'eventop.events.ctn.campaign.created' } });
     const eventMessage = await EventMessageEntity.create({
       payload: `{"message": "test_message"}`,
       tx_id: "0x25ec682fb51dd5d753defd0cc001b9d209da4899512a5340e806d2a790e34ec9",
@@ -78,8 +78,8 @@ describe('EventMessageService', () => {
     // expect rabbitmq message request was called with correct routing key and body
     // and returned with true (other service has received and accepted message)
     expect(eventMqRequest).toHaveBeenCalledWith(
-      "avacuscc-event-mq",
-      "avacuscc.events.ctn.campaign.created",
+      "eventop-event-mq",
+      "eventop.events.ctn.campaign.created",
       {
         id: eventMessage.id,
         payload: { "message": "test_message" },

@@ -1,8 +1,6 @@
 
 ### Architecture
 
-![diagram](/docs/images/diagram.jpg)
-
 ### Setup
 
 #### Tracking New Event

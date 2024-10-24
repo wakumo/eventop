@@ -37,13 +37,13 @@ jobs:
       DB_HOST: localhost
       DB_PORT: 5432
       DB_USER: runner
-      DB_NAME: avacuscc-events
-      DB_NAME_TEST: avacuscc-events-test
+      DB_NAME: eventop
+      DB_NAME_TEST: eventop-test
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       RABBITMQ_HOST: 127.0.0.1
       RABBITMQ_PORT: 5672
-      RABBITMQ_EXCHANGE_NAME: avacuscc-event-mq
+      RABBITMQ_EXCHANGE_NAME: eventop_exchange
 
     steps:
       - uses: actions/checkout@v4

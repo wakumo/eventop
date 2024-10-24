@@ -49,4 +49,12 @@ export class NetworkService {
       throw new NoAvailableNodeException();
     }
   }
+
+  async findAll() {
+    const networks = await NetworkEntity.createQueryBuilder('networks')
+      .leftJoinAndSelect('networks.processed_block', 'processed_block')
+      .orderBy('networks.chain_id', 'DESC')
+      .getMany();
+    return networks;
+  }
 }
