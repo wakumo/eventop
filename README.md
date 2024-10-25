@@ -11,7 +11,7 @@ DockerHub Link: https://hub.docker.com/r/registrywkm/eventop
 docker build --platform linux/amd64 -t registrywkm/eventop:<tag-version> .
 ```
 
-- Using `docker login` cli to login account: https://start.1password.com/open/i?a=VC6IISJJFJE2VPYHCWW5K2HBSM&v=yuxny46dkvbpnlbsisq2442uli&i=bjth42febagm32c4qixq2gdkg4&h=wakumovietnamcoltd.1password.com
+- Using `docker login` cli to login registrywkm account
 
 ```
 docker push registrywkm/eventop:<tag>
