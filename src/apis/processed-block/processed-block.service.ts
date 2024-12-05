@@ -118,10 +118,7 @@ export class ProcessedBlockService {
     topics: string[],
     scanRangeNo: number,
   ) {
-    const registedEvents = await this.cacheManager.findOrCache(
-      this.eventService.getEventsByChain.bind(null, scanOptions.chain_id),
-      `EventsByChain.${scanOptions.chain_id}`
-    );
+    const registedEvents = await this.eventService.getEventsByChain(scanOptions.chain_id);
     const [fromBlock, toBlock] = await this._getBlockRange(nodeUrl, scanOptions);
     const isRescan = !!(scanOptions.from_block && scanOptions.to_block);
     const blockRangeChunks = chunkArray(fromBlock, toBlock, scanRangeNo);
