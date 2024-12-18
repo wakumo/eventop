@@ -88,6 +88,9 @@ describe('ProcessedBlockService', () => {
 
   describe('Orphan block', () => {
     beforeEach(async () => {
+      jest.spyOn(JsonRpcClient.prototype, 'getCurrentBlock').mockImplementation(async () => {
+        return 24639471;
+      });
       when(fnGetBlock).calledWith(expect.any(Number)).mockImplementation((blockNo) => {
         return { number: blockNo, timestamp: 1703134791, parentHash: '0x2222' }
       });
