@@ -197,7 +197,7 @@ export class ProcessedBlockService {
     if (isShouldSwitchNode) {
       console.info(`${new Date()} - Switching to another node for network ${network.chain_id}`);
       const nodesToExclude = latestScanResult?.longSleep ? [] : [network.http_url];
-      network = await this.networkService.pickAndUpdateAvailableNode(network, nodesToExclude);
+      network = await withTimeout(this.networkService.pickAndUpdateAvailableNode(network, nodesToExclude), 10_000);
     }
 
     return network;

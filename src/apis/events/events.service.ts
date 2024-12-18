@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import { ChainTopicsInterface } from 'src/commons/interfaces/chain_topics.interface.js';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { getABIInputsHash, getTopicFromEvent } from '../../commons/utils/blockchain.js';
 import { EventEntity } from '../../entities/index.js';
@@ -14,58 +14,97 @@ export class EventsService {
     private connection: DataSource,
   ) {}
 
+  async findEventBy(
+    chainId: number,
+    serviceName: string,
+    name: string,
+    inputsHash: string
+  ) {
+    let queryParams = {
+      chain_id: chainId,
+      name: name,
+      service_name: serviceName,
+    }
+    if (inputsHash) {
+      queryParams['abi_inputs_hash'] = inputsHash;
+    }
+
+    return EventEntity.createQueryBuilder('event')
+      .where(queryParams)
+      .getOne();
+  }
+
+  /**
+   * Registers an event in the database or updates its ABI inputs hash if it already exists.
+   */
   async registerEvent(createEventDto: CreateEventDto) {
     const queryRunner = this.connection.createQueryRunner();
+
     await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       const eventTopic = getTopicFromEvent(createEventDto.name);
-      let event: EventEntity;
-
-      if (createEventDto.routing_key) {
-        event = await EventEntity.findOne({
-          where: {
-            chain_id: createEventDto.chain_id,
-            routing_key: createEventDto.routing_key,
-            service_name: createEventDto.service_name,
-          },
-        });
-      } else {
-        event = await EventEntity.findOne({
-          where: {
-            chain_id: createEventDto.chain_id,
-            event_topic: eventTopic,
-            service_name: createEventDto.service_name,
-          },
-        });
-      }
-
-      // Two Transfered events can have same function signature (event_topic)
-      // But ABI can be different due to indexes factor
-      // therefore we need allow register two events same signature but different abi
-      // inputsHash is used to detected abi structure is same or not
       const inputsHash = getABIInputsHash(createEventDto.abi);
 
+      const event = await this.findEventBy(
+        createEventDto.chain_id,
+        createEventDto.service_name,
+        createEventDto.name,
+        inputsHash
+      );
+
       if (event) {
-        // update inputs_hash if not exists
-        if (!event.abi_inputs_hash) {
-          event.abi_inputs_hash = inputsHash;
-          await queryRunner.manager.save(EventEntity, event);
-        }
-        return;
+        await this._updateEvent(event, inputsHash, createEventDto.routing_key, queryRunner);
+      } else {
+        await this._createEvent(eventTopic, inputsHash, createEventDto, queryRunner);
       }
-      console.log(`Registering event: ${createEventDto.name}, chain id: ${createEventDto.chain_id}, service: ${createEventDto.service_name}, routing key: ${createEventDto.routing_key}`);
-      event = EventEntity.create({
-        event_topic: eventTopic,
-        abi_inputs_hash: inputsHash,
-        ...createEventDto,
-      });
-      event = await queryRunner.manager.save(EventEntity, event);
+
+      await queryRunner.commitTransaction();
       return event;
     } catch (error) {
-      console.log(error);
+      console.error(`Failed to register event: ${error.message}`, error);
+      await queryRunner.rollbackTransaction();
+      throw error;
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async _createEvent(
+    eventTopic: string,
+    inputsHash: string,
+    createEventDto: CreateEventDto,
+    queryRunner: QueryRunner
+  ) {
+    console.info(
+      `Registering event: ${createEventDto.name}, chainId: ${createEventDto.chain_id}, service: ${createEventDto.service_name}, routingKey: ${createEventDto.routing_key}`
+    );
+    let event = EventEntity.create({
+      event_topic: eventTopic,
+      abi_inputs_hash: inputsHash,
+      ...createEventDto,
+    });
+    await queryRunner.manager.save(EventEntity, event);
+  }
+
+  private async _updateEvent(
+    event: EventEntity,
+    inputsHash: string,
+    routingKey: string,
+    queryRunner: QueryRunner
+  ) {
+    if (event.abi_inputs_hash === inputsHash && event.routing_key === routingKey) {
+      return;
+    }
+
+    console.info(
+      `Updating event: ${event.name}, chainId: ${event.chain_id}, service: ${event.service_name}, routingKey: ${routingKey}`
+    );
+
+    event.abi_inputs_hash = inputsHash;
+    event.routing_key = routingKey;
+    await queryRunner.manager.save(EventEntity, event);
   }
 
   async getTopicsByChainId(chainId: number) {
