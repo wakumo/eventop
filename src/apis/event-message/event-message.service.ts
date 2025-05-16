@@ -96,7 +96,8 @@ export class EventMessageService {
       where: { status: EventMessageStatus.PENDING },
       relations: ["event"], skip: 0, take: 5000,
       order: {
-        block_no: "ASC"
+        block_no: "ASC",
+        log_index: "ASC"
       }
     });
 
