@@ -83,6 +83,25 @@ export class ProcessedBlockService {
     const latestProcessBlock = await this.latestProccessedBlockBy(chainId);
     return latestProcessBlock;
   }
+
+  private async _getCurrentBlockWithCache(nodeUrl: string, chainId: number): Promise<number> {
+    const cacheKey = `eth_blocknumber_${chainId}`;
+    let currentBlockNoRaw = await this.cacheManager.get(cacheKey);
+    let currentBlockNo: number;
+
+    if (!currentBlockNoRaw) {
+      const rpcClient = new JsonRpcClient(nodeUrl);
+      currentBlockNo = await rpcClient.getCurrentBlock();
+      console.info('Set redis key:', cacheKey, currentBlockNo);
+      await this.cacheManager.set(cacheKey, String(currentBlockNo), 2); // 2 seconds
+    } else {
+      console.info('Get redis key:', cacheKey, currentBlockNoRaw);
+      currentBlockNo = parseInt(currentBlockNoRaw, 10);
+    }
+
+    return currentBlockNo;
+  }
+
   /**
    * Get the block range for scanning coin transfers.
    *
@@ -99,14 +118,11 @@ export class ProcessedBlockService {
     // Get the next block number to scan from the database
     const latestProcessedBlock = await this._getLatestScannedBlock(scanOptions.chain_id);
     const nextBlockNo = latestProcessedBlock ? latestProcessedBlock.block_no + 1 : null;
-    // Get the current block number from the blockchain
-    const rpcClient = new JsonRpcClient(nodeUrl);
-    const currentBlockNo = await rpcClient.getCurrentBlock();
-
+    const currentBlockNo = await this._getCurrentBlockWithCache(nodeUrl, scanOptions.chain_id);
     // Calculate the starting block number based on the next block or current block
-    let fromBlock = nextBlockNo || Number(currentBlockNo.toString());
+    let fromBlock = nextBlockNo || currentBlockNo;
     // Calculate the ending block number, limiting the range to 500 blocks
-    let toBlock = Number(currentBlockNo.toString());
+    let toBlock = currentBlockNo;
     toBlock = Math.min(fromBlock + 500, toBlock);
 
     return [fromBlock, toBlock];
