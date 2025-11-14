@@ -8,21 +8,33 @@ import { chunkArrayReturnHex } from '../../commons/utils/index.js';
 
 
 export const fnGetBlockNumber = jest.fn();
-const fnGetPastLogs = jest.fn();
+export const fnGetPastLogs = jest.fn();
 export const fnGetBlock = jest.fn();
 
 // Mock fetch
 export const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock eth_getBlockByNumber, eth_getBlockReceipts for any block number
-when(mockFetch).calledWith('https://data-seed-prebsc-1-s3.bnbchain.org:8545', _getTraceBlockRequestPayload()).mockResolvedValue({
+// Default mock for trace_block requests - returns empty array
+// This will be overridden by specific mocks in test cases
+// Note: jest-when matches more specific mocks first, so specific mocks in test cases will take precedence
+when(mockFetch).calledWith(
+  'https://data-seed-prebsc-1-s3.bnbchain.org:8545',
+  expect.objectContaining({
+    method: 'POST',
+    body: expect.stringContaining('trace_block')
+  })
+).mockResolvedValue({
   json: () => Promise.resolve({ result: [] }),
 });
 
 when(fnGetBlockNumber).mockReturnValue(24639471);
 
-const chunks = chunkArrayReturnHex(24639371, 24639471, 2);
+// Update chunk size from 2 to 5 to match the new implementation
+// Note: Mock returns 1 log per chunk (for the first block of each chunk only)
+// With chunk size 5: 101 blocks ÷ 5 = 21 chunks → 21 logs → 21 messages
+// But the last chunk (24639471) returns empty array, so we get 20 messages
+const chunks = chunkArrayReturnHex(24639371, 24639471, 5);
 
 for (let i = 0; i < chunks.length; i++) {
   when(fnGetPastLogs)
@@ -52,6 +64,8 @@ when(fnGetPastLogs)
   })
   .mockReturnValue(pastLogs24639421_24639470);
 
+// Mock for chunk 24639471-24639471 (last chunk with chunk size 5)
+// Returns empty array, so this chunk doesn't contribute to message count
 when(fnGetPastLogs)
   .calledWith({
     fromBlock: '0x177f7ef',

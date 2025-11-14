@@ -264,14 +264,18 @@ export class ProcessedBlockService {
 
     try {
       await queryRunner.startTransaction();
-      console.info(`${new Date()} - processing coin transfer events`);
-      const coinTransferMessages = await this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap);
-      console.info(`${new Date()} - processing contract events`);
-      const contractEventMessages = await this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap);
+      // Process coin transfers and contract events in parallel for better performance
+      console.info(`${new Date()} - processing coin transfer events and contract events in parallel`);
+      const [coinTransferMessages, contractEventMessages] = await Promise.all([
+        this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap),
+        this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap)
+      ]);
       console.info(`${new Date()} - saving event messages`);
       const messages = [...contractEventMessages, ...coinTransferMessages];
       if (messages.length !== 0) {
-        await queryRunner.manager.save(messages, { chunk: 200 });
+        // Increase chunk size for better batch insert performance
+        const chunkSize = Math.min(1000, Math.max(200, Math.floor(messages.length / 5)));
+        await queryRunner.manager.save(messages, { chunk: chunkSize });
         console.info(`Saved ${messages.length} event messages`)
       }
 
@@ -334,12 +338,23 @@ export class ProcessedBlockService {
     console.info(`${new Date()} - scanning event by topics`);
     const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
     console.info(`${new Date()} - got logs`);
+
+    // Pre-build a Map for O(1) event lookup instead of filtering for each log
+    const eventsByTopic = new Map<string, EventEntity[]>();
+    registedEvents.forEach(event => {
+      if (event.chain_id === chainId) {
+        const topic = event.event_topic;
+        if (!eventsByTopic.has(topic)) {
+          eventsByTopic.set(topic, []);
+        }
+        eventsByTopic.get(topic)!.push(event);
+      }
+    });
+
     const eventMessages: EventMessageEntity[][] = await Promise.all(logs.map(async (log) => {
       const topic = log['topics'][0];
+      const relevantEvents = eventsByTopic.get(topic) || [];
 
-      const relevantEvents = registedEvents.filter(
-        (event) => event.event_topic === topic && event.chain_id === chainId
-      );
       const messages = await Promise.all(relevantEvents.map(async (event) => {
         return this.eventMsgService.createEventMessage(event, log, blockDataMap[log['blockNumber']]);
       }));
@@ -528,7 +543,11 @@ export class ProcessedBlockService {
     toBlock: number,
     topics: string[],
   ) {
-    const hexChunks = chunkArrayReturnHex(fromBlock, toBlock, 2);
+    // Increase chunk size from 2 to 5 blocks for better performance
+    // Using 5 instead of 100 to avoid being rate-limited by the node
+    const blockRange = toBlock - fromBlock + 1;
+    const chunkSize = blockRange <= 5 ? blockRange : 5;
+    const hexChunks = chunkArrayReturnHex(fromBlock, toBlock, chunkSize);
     const getLogsPromises = [];
 
     for (let chunkIndex = 0; chunkIndex < hexChunks.length; chunkIndex++) {

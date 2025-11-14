@@ -24,7 +24,7 @@ import { EventsService } from '../events/events.service.js';
 import { NetworkService } from '../network/network.service.js';
 import { ProcessedBlockService } from './processed-block.service.js';
 import { EventMqMockModule } from '../../../test/utils/mock-eventmq.module.js';
-import { _getTraceBlockRequestPayload, fnGetBlock, fnGetBlockNumber, mockFetch } from './mock-web3-spec.processed-block.js';
+import { _getTraceBlockRequestPayload, fnGetBlock, fnGetBlockNumber, fnGetPastLogs, mockFetch } from './mock-web3-spec.processed-block.js';
 import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 
 describe('ProcessedBlockService', () => {
@@ -82,7 +82,10 @@ describe('ProcessedBlockService', () => {
       .orderBy('processed_block.block_no', 'DESC')
       .getOne();
 
-    expect(messages.length).toEqual(50);
+    // With chunk size 5: 101 blocks ÷ 5 = 21 chunks
+    // Mock returns 1 log per chunk (first block only) = 21 logs
+    // But last chunk (24639471) returns empty array, so we get 20 messages
+    expect(messages.length).toEqual(20);
     expect(processedBlock.block_no).toEqual(24639471);
   });
 
@@ -119,12 +122,43 @@ describe('ProcessedBlockService', () => {
       jest.spyOn(JsonRpcClient.prototype, 'getCurrentBlock').mockImplementation(async () => {
         return 400000;
       });
-      when(mockFetch).calledWith('https://data-seed-prebsc-1-s3.bnbchain.org:8545', _getTraceBlockRequestPayload(400000)).mockResolvedValue({
-        json: () => Promise.resolve(traceBlock_97_400000),
+      mockFetch.mockImplementation((url, options) => {
+        if (url === 'https://data-seed-prebsc-1-s3.bnbchain.org:8545' && options?.method === 'POST') {
+          const body = typeof options.body === 'string' ? options.body : '';
+          if (body.includes('trace_block') && body.includes('"id":400000')) {
+            return Promise.resolve({
+              json: () => Promise.resolve(traceBlock_97_400000),
+            });
+          }
+          if (body.includes('trace_block') && /"id":(40000[1-9]|4000[1-4][0-9]|400049)/.test(body)) {
+            return Promise.resolve({
+              json: () => Promise.resolve({ result: [] }),
+            });
+          }
+        }
+        return Promise.resolve({
+          json: () => Promise.resolve({ result: [] }),
+        });
       });
       when(fnGetBlock).calledWith(expect.any(Number)).mockImplementation((blockNo) => {
         return { number: blockNo, timestamp: 1703134791 }
       });
+      for (let block = 400000; block <= 400049; block += 5) {
+        const toBlock = Math.min(block + 4, 400049);
+        const fromBlockHex = '0x' + block.toString(16);
+        const toBlockHex = '0x' + toBlock.toString(16);
+        when(fnGetPastLogs)
+          .calledWith({
+            fromBlock: fromBlockHex,
+            toBlock: toBlockHex,
+            topics: expect.anything(),
+          })
+          .mockReturnValue([]);
+      }
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
     });
 
     it('should create 2 messages', async () => {
