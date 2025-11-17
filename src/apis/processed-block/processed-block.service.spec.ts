@@ -119,12 +119,31 @@ describe('ProcessedBlockService', () => {
       jest.spyOn(JsonRpcClient.prototype, 'getCurrentBlock').mockImplementation(async () => {
         return 400000;
       });
-      when(mockFetch).calledWith('https://data-seed-prebsc-1-s3.bnbchain.org:8545', _getTraceBlockRequestPayload(400000)).mockResolvedValue({
-        json: () => Promise.resolve(traceBlock_97_400000),
+      mockFetch.mockImplementation((url, options) => {
+        if (url === 'https://data-seed-prebsc-1-s3.bnbchain.org:8545' && options?.method === 'POST') {
+          const body = typeof options.body === 'string' ? options.body : '';
+          if (body.includes('trace_block') && body.includes('"id":400000')) {
+            return Promise.resolve({
+              json: () => Promise.resolve(traceBlock_97_400000),
+            });
+          }
+          if (body.includes('trace_block') && /"id":(40000[1-9]|4000[1-4][0-9]|400049)/.test(body)) {
+            return Promise.resolve({
+              json: () => Promise.resolve({ result: [] }),
+            });
+          }
+        }
+        return Promise.resolve({
+          json: () => Promise.resolve({ result: [] }),
+        });
       });
       when(fnGetBlock).calledWith(expect.any(Number)).mockImplementation((blockNo) => {
         return { number: blockNo, timestamp: 1703134791 }
       });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
     });
 
     it('should create 2 messages', async () => {
