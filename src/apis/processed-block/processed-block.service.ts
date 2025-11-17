@@ -273,9 +273,7 @@ export class ProcessedBlockService {
       console.info(`${new Date()} - saving event messages`);
       const messages = [...contractEventMessages, ...coinTransferMessages];
       if (messages.length !== 0) {
-        // Increase chunk size for better batch insert performance
-        const chunkSize = Math.min(1000, Math.max(200, Math.floor(messages.length / 5)));
-        await queryRunner.manager.save(messages, { chunk: chunkSize });
+        await queryRunner.manager.save(messages, { chunk: 200 });
         console.info(`Saved ${messages.length} event messages`)
       }
 
