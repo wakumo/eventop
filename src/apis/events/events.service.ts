@@ -47,7 +47,7 @@ export class EventsService {
       const eventTopic = getTopicFromEvent(createEventDto.name);
       const inputsHash = getABIInputsHash(createEventDto.abi);
 
-      const event = await this.findEventBy(
+      let event = await this.findEventBy(
         createEventDto.chain_id,
         createEventDto.service_name,
         createEventDto.name,
@@ -55,9 +55,9 @@ export class EventsService {
       );
 
       if (event) {
-        await this._updateEvent(event, inputsHash, createEventDto.routing_key, queryRunner);
+        event = await this._updateEvent(event, inputsHash, createEventDto.routing_key, queryRunner);
       } else {
-        await this._createEvent(eventTopic, inputsHash, createEventDto, queryRunner);
+        event = await this._createEvent(eventTopic, inputsHash, createEventDto, queryRunner);
       }
 
       await queryRunner.commitTransaction();
@@ -76,7 +76,7 @@ export class EventsService {
     inputsHash: string,
     createEventDto: CreateEventDto,
     queryRunner: QueryRunner
-  ) {
+  ): Promise<EventEntity> {
     console.info(
       `Registering event: ${createEventDto.name}, chainId: ${createEventDto.chain_id}, service: ${createEventDto.service_name}, routingKey: ${createEventDto.routing_key}`
     );
@@ -85,7 +85,7 @@ export class EventsService {
       abi_inputs_hash: inputsHash,
       ...createEventDto,
     });
-    await queryRunner.manager.save(EventEntity, event);
+    return await queryRunner.manager.save(EventEntity, event);
   }
 
   private async _updateEvent(
@@ -93,9 +93,9 @@ export class EventsService {
     inputsHash: string,
     routingKey: string,
     queryRunner: QueryRunner
-  ) {
+  ): Promise<EventEntity> {
     if (event.abi_inputs_hash === inputsHash && event.routing_key === routingKey) {
-      return;
+      return event;
     }
 
     console.info(
@@ -104,7 +104,7 @@ export class EventsService {
 
     event.abi_inputs_hash = inputsHash;
     event.routing_key = routingKey;
-    await queryRunner.manager.save(EventEntity, event);
+    return await queryRunner.manager.save(EventEntity, event);
   }
 
   async getTopicsByChainId(chainId: number) {

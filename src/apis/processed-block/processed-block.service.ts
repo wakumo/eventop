@@ -264,10 +264,11 @@ export class ProcessedBlockService {
 
     try {
       await queryRunner.startTransaction();
-      console.info(`${new Date()} - processing coin transfer events`);
-      const coinTransferMessages = await this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap);
-      console.info(`${new Date()} - processing contract events`);
-      const contractEventMessages = await this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap);
+      console.info(`${new Date()} - processing coin transfer events and contract events in parallel`);
+      const [coinTransferMessages, contractEventMessages] = await Promise.all([
+        this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap),
+        this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap)
+      ]);
       console.info(`${new Date()} - saving event messages`);
       const messages = [...contractEventMessages, ...coinTransferMessages];
       if (messages.length !== 0) {
@@ -334,12 +335,23 @@ export class ProcessedBlockService {
     console.info(`${new Date()} - scanning event by topics`);
     const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
     console.info(`${new Date()} - got logs`);
+
+    // Pre-build a Map for O(1) event lookup instead of filtering for each log
+    const eventsByTopic = new Map<string, EventEntity[]>();
+    registedEvents.forEach(event => {
+      if (event.chain_id === chainId) {
+        const topic = event.event_topic;
+        if (!eventsByTopic.has(topic)) {
+          eventsByTopic.set(topic, []);
+        }
+        eventsByTopic.get(topic)!.push(event);
+      }
+    });
+
     const eventMessages: EventMessageEntity[][] = await Promise.all(logs.map(async (log) => {
       const topic = log['topics'][0];
+      const relevantEvents = eventsByTopic.get(topic) || [];
 
-      const relevantEvents = registedEvents.filter(
-        (event) => event.event_topic === topic && event.chain_id === chainId
-      );
       const messages = await Promise.all(relevantEvents.map(async (event) => {
         return this.eventMsgService.createEventMessage(event, log, blockDataMap[log['blockNumber']]);
       }));
