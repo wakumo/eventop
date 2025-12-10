@@ -40,3 +40,5 @@ lerna-debug.log*
 src/scripts/events/*
 src/scripts/sample.ts
 *.seed.json
+AGENTS.md
+openspec/

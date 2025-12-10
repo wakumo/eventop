@@ -98,4 +98,192 @@ describe('EventMessageService', () => {
       undefined
     );
   })
+
+  it("should mark messages as DELIVERED when KEEP_SENT_MESSAGES=1", async () => {
+    process.env.KEEP_SENT_MESSAGES = '1';
+    const event = await EventEntity.create({
+      service_name: "test-service",
+      name: "TestEvent()",
+      routing_key: "eventop.events.test.event",
+      abi: JSON.stringify({ "inputs": [], "name": "TestEvent", "type": "event" }),
+      event_topic: "0xtest123",
+      chain_id: 1,
+    }).save();
+
+    const message = await EventMessageEntity.create({
+      payload: `{"test": "data"}`,
+      tx_id: "0xtest456",
+      event_id: event.id,
+      block_no: 100,
+      status: EventMessageStatus.PENDING,
+      contract_address: "0xabc123",
+      log_index: 0
+    }).save();
+
+    await service.sendPendingMessages();
+
+    const updatedMessage = await EventMessageEntity.findOne({ where: { id: message.id } });
+    expect(updatedMessage).toBeDefined();
+    expect(updatedMessage.status).toBe(EventMessageStatus.DELIVERED);
+
+    delete process.env.KEEP_SENT_MESSAGES;
+  })
+
+  it("should delete messages immediately when KEEP_SENT_MESSAGES=0 or unset", async () => {
+    process.env.KEEP_SENT_MESSAGES = '0';
+
+    const event = await EventEntity.create({
+      service_name: "test-service",
+      name: "TestEvent()",
+      routing_key: "eventop.events.test.event",
+      abi: JSON.stringify({ "inputs": [], "name": "TestEvent", "type": "event" }),
+      event_topic: "0xtest123",
+      chain_id: 1,
+    }).save();
+
+    const message = await EventMessageEntity.create({
+      payload: `{"test": "data"}`,
+      tx_id: "0xtest456",
+      event_id: event.id,
+      block_no: 100,
+      status: EventMessageStatus.PENDING,
+      contract_address: "0xabc123",
+      log_index: 0
+    }).save();
+
+    await service.sendPendingMessages();
+
+    const deletedMessage = await EventMessageEntity.findOne({ where: { id: message.id } });
+    expect(deletedMessage).toBeNull();
+
+    delete process.env.KEEP_SENT_MESSAGES;
+  })
+
+  it("should delete delivered messages older than configured retention period", async () => {
+    process.env.EVENT_MESSAGE_RETENTION_HOURS = '24'; // 1 day
+    const event = await EventEntity.create({
+      service_name: "test-service",
+      name: "TestEvent()",
+      routing_key: "eventop.events.test.event",
+      abi: JSON.stringify({ "inputs": [], "name": "TestEvent", "type": "event" }),
+      event_topic: "0xtest123",
+      chain_id: 1,
+    }).save();
+
+    // Create old delivered message (2 days ago)
+    const oldMessage = await EventMessageEntity.create({
+      payload: `{"test": "old"}`,
+      tx_id: "0xold",
+      event_id: event.id,
+      block_no: 100,
+      status: EventMessageStatus.DELIVERED,
+      contract_address: "0xold",
+      log_index: 0
+    }).save();
+
+    // Manually set updated_at to 2 days ago
+    await EventMessageEntity.update(
+      { id: oldMessage.id },
+      { updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+    );
+
+    // Create recent delivered message (1 hour ago)
+    const recentMessage = await EventMessageEntity.create({
+      payload: `{"test": "recent"}`,
+      tx_id: "0xrecent",
+      event_id: event.id,
+      block_no: 200,
+      status: EventMessageStatus.DELIVERED,
+      contract_address: "0xrecent",
+      log_index: 0
+    }).save();
+
+    // Create pending message (should not be deleted)
+    const pendingMessage = await EventMessageEntity.create({
+      payload: `{"test": "pending"}`,
+      tx_id: "0xpending",
+      event_id: event.id,
+      block_no: 300,
+      status: EventMessageStatus.PENDING,
+      contract_address: "0xpending",
+      log_index: 0
+    }).save();
+    await EventMessageEntity.update(
+      { id: pendingMessage.id },
+      { updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+    );
+
+    await service.deleteDeliveredMessage();
+
+    // Old delivered message should be deleted
+    const oldMessageAfter = await EventMessageEntity.findOne({ where: { id: oldMessage.id } });
+    expect(oldMessageAfter).toBeNull();
+
+    // Recent delivered message should still exist
+    const recentMessageAfter = await EventMessageEntity.findOne({ where: { id: recentMessage.id } });
+    expect(recentMessageAfter).toBeDefined();
+    expect(recentMessageAfter.status).toBe(EventMessageStatus.DELIVERED);
+
+    // Pending message should still exist (not affected by cleanup)
+    const pendingMessageAfter = await EventMessageEntity.findOne({ where: { id: pendingMessage.id } });
+    expect(pendingMessageAfter).toBeDefined();
+    expect(pendingMessageAfter.status).toBe(EventMessageStatus.PENDING);
+
+    delete process.env.EVENT_MESSAGE_RETENTION_HOURS;
+  })
+
+  it("should respect custom retention period (12 hours)", async () => {
+    process.env.EVENT_MESSAGE_RETENTION_HOURS = '12'; // 12 hours
+
+    const event = await EventEntity.create({
+      service_name: "test-service",
+      name: "TestEvent()",
+      routing_key: "eventop.events.test.event",
+      abi: JSON.stringify({ "inputs": [], "name": "TestEvent", "type": "event" }),
+      event_topic: "0xtest123",
+      chain_id: 1,
+    }).save();
+
+    // Create message 18 hours old (should be deleted with 12h retention)
+    const oldMessage = await EventMessageEntity.create({
+      payload: `{"test": "old"}`,
+      tx_id: "0xold18h",
+      event_id: event.id,
+      block_no: 100,
+      status: EventMessageStatus.DELIVERED,
+      contract_address: "0xold",
+      log_index: 0
+    }).save();
+    await EventMessageEntity.update(
+      { id: oldMessage.id },
+      { updated_at: new Date(Date.now() - 18 * 60 * 60 * 1000) } // 18 hours ago
+    );
+
+    // Create message 6 hours old (should NOT be deleted with 12h retention)
+    const recentMessage = await EventMessageEntity.create({
+      payload: `{"test": "recent"}`,
+      tx_id: "0xrecent6h",
+      event_id: event.id,
+      block_no: 200,
+      status: EventMessageStatus.DELIVERED,
+      contract_address: "0xrecent",
+      log_index: 0
+    }).save();
+    await EventMessageEntity.update(
+      { id: recentMessage.id },
+      { updated_at: new Date(Date.now() - 6 * 60 * 60 * 1000) } // 6 hours ago
+    );
+
+    await service.deleteDeliveredMessage();
+
+    // 18h old message should be deleted
+    const oldMessageAfter = await EventMessageEntity.findOne({ where: { id: oldMessage.id } });
+    expect(oldMessageAfter).toBeNull();
+
+    // 6h old message should still exist
+    const recentMessageAfter = await EventMessageEntity.findOne({ where: { id: recentMessage.id } });
+    expect(recentMessageAfter).toBeDefined();
+
+    delete process.env.EVENT_MESSAGE_RETENTION_HOURS;
+  })
 });

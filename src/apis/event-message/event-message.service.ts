@@ -139,7 +139,7 @@ export class EventMessageService {
         // console.log(`Message Body: ${JSON.stringify(body)}`);
         this.producer.publish(null, routingKey, body);
       }
-      await this._deleteDeliveredMessage(queryRunner, pendingMessages);
+      await this._markMessagesAsDelivered(queryRunner, pendingMessages);
 
       console.log(`${new Date()}Finished send pending messages`);
     } catch (ex) {
@@ -151,34 +151,54 @@ export class EventMessageService {
     }
   }
 
-  private async _deleteDeliveredMessage(queryRunner: QueryRunner, pendingMessages: EventMessageEntity[]) {
+  /**
+   * Handles delivered messages after successful broadcast to RabbitMQ.
+   * Behavior controlled by KEEP_SENT_MESSAGES env var:
+   * - '1': Marks messages as DELIVERED for debugging (retained for 1 day)
+   * - '0' or unset: Deletes messages immediately (legacy behavior)
+   */
+  private async _markMessagesAsDelivered(queryRunner: QueryRunner, pendingMessages: EventMessageEntity[]) {
     if (pendingMessages.length === 0) { return; }
 
-    await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
-      .whereInIds(pendingMessages.map((message) => message.id))
-      .delete()
-      .execute();
+    const keepSentMessages = process.env.KEEP_SENT_MESSAGES === '1';
+
+    if (keepSentMessages) {
+      // New behavior: Mark as DELIVERED for debugging
+      await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
+        .whereInIds(pendingMessages.map((message) => message.id))
+        .update({ status: EventMessageStatus.DELIVERED })
+        .execute();
+    } else {
+      // Legacy behavior: Delete immediately
+      await queryRunner.manager.createQueryBuilder(EventMessageEntity, 'event_messages')
+        .whereInIds(pendingMessages.map((message) => message.id))
+        .delete()
+        .execute();
+    }
   }
 
   /**
-   * Deletes delivered EventMessageEntity records that are older than two days.
+   * Deletes delivered EventMessageEntity records older than the configured retention period.
+   * Retention period controlled by EVENT_MESSAGE_RETENTION_HOURS env var (default: 24 hours).
+   * This cleanup job should be scheduled to run periodically (e.g., daily via cron).
    */
   async deleteDeliveredMessage(): Promise<void> {
     try {
+      const retentionHours = Number(process.env.EVENT_MESSAGE_RETENTION_HOURS || 24);
       const currentTime = new Date();
-      const twoDaysAgo = new Date(currentTime.getTime() - (2 * 24 * 60 * 60 * 1000));
+      const retentionCutoff = new Date(currentTime.getTime() - (retentionHours * 60 * 60 * 1000));
 
       const deleteResult: DeleteResult = await EventMessageEntity.createQueryBuilder('event_messages')
         .where('event_messages.status = :status', {
           status: EventMessageStatus.DELIVERED,
         })
-        .andWhere('event_messages.updated_at <= :twoDaysAgo', {
-          twoDaysAgo: twoDaysAgo,
+        .andWhere('event_messages.updated_at <= :retentionCutoff', {
+          retentionCutoff: retentionCutoff,
         })
         .delete()
         .execute();
 
-      console.info(`${new Date()} - ${deleteResult.affected} records deleted.`);
+      console.info(`${new Date()} - ${deleteResult.affected} delivered message(s) deleted (older than ${retentionHours} hours).`);
     } catch (error) {
       console.error(error);
     }

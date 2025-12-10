@@ -4,7 +4,7 @@ import { EventMessageService } from "../../apis/event-message/event-message.serv
 
 @Command({
   name: 'job:delete_delivered_messages',
-  description: 'Delete all delivered events message to avoig huge database size',
+  description: 'Delete delivered event messages older than configured retention period (EVENT_MESSAGE_RETENTION_HOURS). Required when KEEP_SENT_MESSAGES=1',
 })
 export class DeleteDeliveredMessages extends CommandRunner {
   constructor(
