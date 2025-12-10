@@ -5,6 +5,15 @@ DockerHub Link: https://hub.docker.com/r/registrywkm/eventop
 
 ### Setup
 
+#### Environment Variables
+
+**Event Message Retention:**
+- `KEEP_SENT_MESSAGES=1` - Keep sent messages as DELIVERED status for debugging
+- `KEEP_SENT_MESSAGES=0` or unset - Delete messages immediately after sending (legacy behavior, default)
+- `EVENT_MESSAGE_RETENTION_HOURS=24` - Retention period in hours (default: 24 = 1 day)
+  - Examples: `12` (12 hours), `48` (2 days), `72` (3 days)
+- When `KEEP_SENT_MESSAGES=1`, run cleanup job periodically: `yarn execute job:delete_delivered_messages`
+
 ### Build & Deploy
 
 ```
