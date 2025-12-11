@@ -132,6 +132,7 @@
       "^src/(.*)$": "<rootDir>/$1",
       "^@/test/(.*)$": "<rootDir>/../test/$1"
     },
+    "setupFilesAfterEnv": ["<rootDir>/test/setup-web3-mock.ts"],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },

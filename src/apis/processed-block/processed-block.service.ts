@@ -1,16 +1,18 @@
 import { DataSource, QueryRunner } from 'typeorm';
 import Web3 from 'web3';
 
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { extractLogsFromReceipts } from './log-transformer.js';
 
 import {
   BlockCoinTransfer,
   BlockTransactionData,
+  LogData,
   ScanOption,
   TransactionsByHash
 } from '../../commons/interfaces/index.js';
 import { initClient } from '../../commons/utils/blockchain.js';
-import { chunkArray, chunkArrayReturnHex, sleep } from '../../commons/utils/index.js';
+import { chunkArray, chunkArrayReturnHex, sleep, maskApiKey } from '../../commons/utils/index.js';
 import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 import { RetryManager } from '../../commons/utils/retry-manager.js';
 import {
@@ -43,6 +45,7 @@ const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
 
 @Injectable()
 export class ProcessedBlockService {
+  private readonly logger = new Logger(ProcessedBlockService.name);
   private readonly retryManager: RetryManager;
 
   constructor(
@@ -84,24 +87,6 @@ export class ProcessedBlockService {
     return latestProcessBlock;
   }
 
-  private async _getCurrentBlockWithCache(nodeUrl: string, chainId: number): Promise<number> {
-    const cacheKey = `eth_blocknumber_${chainId}`;
-    let currentBlockNoRaw = await this.cacheManager.get(cacheKey);
-    let currentBlockNo: number;
-
-    if (!currentBlockNoRaw) {
-      const rpcClient = new JsonRpcClient(nodeUrl);
-      currentBlockNo = await rpcClient.getCurrentBlock();
-      console.info('Set redis key:', cacheKey, currentBlockNo);
-      await this.cacheManager.set(cacheKey, String(currentBlockNo), 2); // 2 seconds
-    } else {
-      console.info('Get redis key:', cacheKey, currentBlockNoRaw);
-      currentBlockNo = parseInt(currentBlockNoRaw, 10);
-    }
-
-    return currentBlockNo;
-  }
-
   /**
    * Get the block range for scanning coin transfers.
    *
@@ -118,7 +103,10 @@ export class ProcessedBlockService {
     // Get the next block number to scan from the database
     const latestProcessedBlock = await this._getLatestScannedBlock(scanOptions.chain_id);
     const nextBlockNo = latestProcessedBlock ? latestProcessedBlock.block_no + 1 : null;
-    const currentBlockNo = await this._getCurrentBlockWithCache(nodeUrl, scanOptions.chain_id);
+
+    const rpcClient = new JsonRpcClient(nodeUrl);
+    const currentBlockNo = await rpcClient.getCurrentBlock();
+
     // Calculate the starting block number based on the next block or current block
     let fromBlock = nextBlockNo || currentBlockNo;
     // Calculate the ending block number, limiting the range to 500 blocks
@@ -206,13 +194,19 @@ export class ProcessedBlockService {
     if (!network) {
       throw new Error(`Network not found for chain ID: ${chainId}`);
     }
+
+    console.info(`${new Date()} - Using node: ${maskApiKey(network.http_url)}`);
+
     if (network.is_stop_scan) { return network; }
 
     // Determine if switching to another node is necessary
     const isShouldSwitchNode = await this._shouldSwitchNode(latestScanResult, chainId);
+
     if (isShouldSwitchNode) {
       console.info(`${new Date()} - Switching to another node for network ${network.chain_id}`);
-      const nodesToExclude = latestScanResult?.longSleep ? [] : [network.http_url];
+      // Only exclude current node if we have multiple nodes AND it's not a longSleep retry
+      const shouldExcludeCurrent = !latestScanResult?.longSleep && network.node_urls.length > 1;
+      const nodesToExclude = shouldExcludeCurrent ? [network.http_url] : [];
       network = await withTimeout(this.networkService.pickAndUpdateAvailableNode(network, nodesToExclude), 10_000);
     }
 
@@ -332,9 +326,8 @@ export class ProcessedBlockService {
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
   ): Promise<EventMessageEntity[]> {
     const client = initClient(nodeUrl);
-    console.info(`${new Date()} - scanning event by topics`);
-    const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics);
-    console.info(`${new Date()} - got logs`);
+    const logs = await this.scanEventByTopics(client, blockRange[0], blockRange[1], topics, chainId);
+    console.info(`${new Date()} - found ${logs.length} logs`);
 
     // Pre-build a Map for O(1) event lookup instead of filtering for each log
     const eventsByTopic = new Map<string, EventEntity[]>();
@@ -353,7 +346,10 @@ export class ProcessedBlockService {
       const relevantEvents = eventsByTopic.get(topic) || [];
 
       const messages = await Promise.all(relevantEvents.map(async (event) => {
-        return this.eventMsgService.createEventMessage(event, log, blockDataMap[log['blockNumber']]);
+        const blockNo = typeof log['blockNumber'] === 'bigint'
+          ? Number(log['blockNumber'])
+          : log['blockNumber'];
+        return this.eventMsgService.createEventMessage(event, log, blockDataMap[blockNo]);
       }));
 
       return messages.filter((msg) => msg !== null);
@@ -534,28 +530,141 @@ export class ProcessedBlockService {
     return blockDataMap;
   }
 
+  /**
+   * Scans blockchain events by topics within a specified block range.
+   * Routes to chain-specific implementation based on chainId:
+   * - Polygon (137): Uses eth_getBlockReceipts for reliable event detection
+   * - Other chains: Uses getPastLogs for efficient batch scanning
+   *
+   * @param client The Web3 client for blockchain interaction.
+   * @param fromBlock The starting block number.
+   * @param toBlock The ending block number.
+   * @param topics The event topics to filter for.
+   * @param chainId The blockchain chain ID.
+   *
+   * @returns Promise resolving to array of extracted logs.
+   */
   async scanEventByTopics(
     client: Web3,
     fromBlock: number,
     toBlock: number,
     topics: string[],
+    chainId: number,
   ) {
-    const hexChunks = chunkArrayReturnHex(fromBlock, toBlock, 2);
-    const getLogsPromises = [];
-
-    for (let chunkIndex = 0; chunkIndex < hexChunks.length; chunkIndex++) {
-      getLogsPromises.push(
-        withTimeout(this.scanEventByTopicsByBlockHexs(
-          client,
-          hexChunks[chunkIndex][0],
-          hexChunks[chunkIndex][1],
-          topics
-        ), 10_000)
-      );
+    if (chainId === 137) {
+      console.info(`${new Date()} [Chain ${chainId}] Using eth_getBlockReceipts method for blocks ${fromBlock}-${toBlock}`);
+      return await this._scanEventByTopicsViaBlockReceipts(client, fromBlock, toBlock, topics, chainId);
+    } else {
+      console.info(`${new Date()} [Chain ${chainId}] Using eth_getPastLogs method for blocks ${fromBlock}-${toBlock}`);
+      return await this._scanEventByTopicsViaPastLogs(client, fromBlock, toBlock, topics);
     }
+  }
+
+  /**
+   * Scans events using standard eth_getLogs (getPastLogs) method.
+   * Chunks the block range and fetches logs in parallel for efficiency.
+   * Used for all non-Polygon chains.
+   *
+   * @param client The Web3 client for blockchain interaction.
+   * @param fromBlock The starting block number.
+   * @param toBlock The ending block number.
+   * @param topics The event topics to filter for.
+   *
+   * @returns Promise resolving to array of extracted logs.
+   */
+  private async _scanEventByTopicsViaPastLogs(
+    client: Web3,
+    fromBlock: number,
+    toBlock: number,
+    topics: string[],
+  ): Promise<LogData[]> {
+    const hexChunks = chunkArrayReturnHex(fromBlock, toBlock, 2);
+    const getLogsPromises = hexChunks.map(([fromHex, toHex]) =>
+      withTimeout(
+        this.scanEventByTopicsByBlockHexs(client, fromHex, toHex, topics),
+        10_000
+      )
+    );
+
     const logsNestedArray = await Promise.all(getLogsPromises);
     const filteredLogs = logsNestedArray.filter(logs => logs !== undefined);
 
     return Array.prototype.concat([], ...filteredLogs);
+  }
+
+  /**
+   * Scans events on Polygon using eth_getBlockReceipts method.
+   * Fetches receipts per block in parallel and extracts matching logs.
+   * This approach is more reliable than eth_getLogs on Polygon network
+   * due to infrastructure instability with the standard method.
+   *
+   * @param client The Web3 client for blockchain interaction.
+   * @param fromBlock The starting block number.
+   * @param toBlock The ending block number.
+   * @param topics The event topics to filter for.
+   * @param chainId The blockchain chain ID (expected 137 for Polygon).
+   *
+   * @returns Promise resolving to array of extracted logs.
+   */
+  private async _scanEventByTopicsViaBlockReceipts(
+    client: Web3,
+    fromBlock: number,
+    toBlock: number,
+    topics: string[],
+    chainId: number,
+  ): Promise<LogData[]> {
+    const { ethGetBlockReceipts } = await import('../../commons/utils/blockchain.js');
+    const blockNumbers = Array.from({ length: toBlock - fromBlock + 1 }, (_, i) => fromBlock + i);
+
+    const blockLogsPromises = blockNumbers.map(blockNo =>
+      this._fetchBlockReceiptsLogs(client, blockNo, topics, chainId, ethGetBlockReceipts)
+    );
+
+    const blockLogsResults = await Promise.all(blockLogsPromises);
+    return blockLogsResults.flat();
+  }
+
+  /**
+   * Fetches and extracts logs from block receipts for a single block.
+   * Handles errors gracefully and logs warnings for empty results.
+   *
+   * @param client The Web3 client for blockchain interaction.
+   * @param blockNo The block number to fetch receipts for.
+   * @param topics The event topics to filter for.
+   * @param chainId The blockchain chain ID for logging context.
+   * @param ethGetBlockReceipts The function to fetch block receipts.
+   *
+   * @returns Promise resolving to array of extracted logs, or empty array on error.
+   */
+  private async _fetchBlockReceiptsLogs(
+    client: Web3,
+    blockNo: number,
+    topics: string[],
+    chainId: number,
+    ethGetBlockReceipts: Function,
+  ): Promise<LogData[]> {
+    const receiptsResponse = await withTimeout(
+      this.retryManager.call(ethGetBlockReceipts(client, blockNo)),
+      10_000
+    );
+
+    if (receiptsResponse.error) {
+      const errorMsg = `BLOCKRECEIPTS_ERROR: chain_id=${chainId}, block=${blockNo}, error=${JSON.stringify(receiptsResponse.error)}`;
+      this.logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    if (!receiptsResponse.result?.length) {
+      this.logger.warn(`EMPTY_BLOCK_RECEIPTS: chain_id=${chainId}, block=${blockNo}, topics=${JSON.stringify(topics)}`);
+      return [];
+    }
+
+    const logs = extractLogsFromReceipts(receiptsResponse.result, topics);
+
+    if (logs.length === 0) {
+      this.logger.warn(`EMPTY_BLOCK_RECEIPTS: chain_id=${chainId}, block=${blockNo}, topics=${JSON.stringify(topics)}, txCount=${receiptsResponse.result.length}`);
+    }
+
+    return logs;
   }
 }

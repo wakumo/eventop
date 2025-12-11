@@ -1,4 +1,3 @@
-import Web3 from 'web3';
 import { when } from 'jest-when';
 import {
   pastLogs24639421_24639470,
@@ -6,10 +5,14 @@ import {
 } from '../../../test/fixtures/index.js';
 import { chunkArrayReturnHex } from '../../commons/utils/index.js';
 
+// Import mock functions from global setup
+import {
+  _fnGetBlockNumber as fnGetBlockNumber,
+  _fnGetPastLogs as fnGetPastLogs,
+  _fnGetBlock as fnGetBlock,
+} from '../../../test/setup-web3-mock.js';
 
-export const fnGetBlockNumber = jest.fn();
-const fnGetPastLogs = jest.fn();
-export const fnGetBlock = jest.fn();
+export { fnGetBlockNumber, fnGetBlock };
 
 // Mock fetch
 export const mockFetch = jest.fn();
@@ -70,17 +73,6 @@ when(fnGetBlock).calledWith(expect.any(Number), whenAny).mockImplementation((blo
   return { number: blockNo, timestamp: 1703134791 }
 });
 
-jest.spyOn(Web3.providers, 'HttpProvider').mockImplementation(() => null);
-jest.mock('web3-eth', () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      getPastLogs: fnGetPastLogs,
-      getBlockNumber: fnGetBlockNumber,
-      getBlock: fnGetBlock,
-    };
-  });
-});
-
 export function _getTraceBlockRequestPayload(blockNumber?: number) {
   const blockNoInHex = blockNumber ? `0x${blockNumber.toString(16)}` : null;
   const body = blockNoInHex ? `{"jsonrpc":"2.0","method":"trace_block","params":["${blockNoInHex}"],"id":${blockNumber}}` : expect.anything();
@@ -91,6 +83,3 @@ export function _getTraceBlockRequestPayload(blockNumber?: number) {
     redirect: 'follow',
   }
 }
-
-
-export default {};
