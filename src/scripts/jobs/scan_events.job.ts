@@ -9,7 +9,7 @@ import { sleep } from '../../commons/utils/index.js';
 import { SECONDS_TO_MILLISECONDS } from '../../config/constants.js';
 
 const SHORT_SLEEP = Number(process.env.SHORT_SLEEP || 1) * SECONDS_TO_MILLISECONDS;
-const LONG_SLEEP = Number(process.env.LONG_SLEEP || 15) * SECONDS_TO_MILLISECONDS; // default 15 seconds in milliseconds
+const LONG_SLEEP = Number(process.env.LONG_SLEEP || 5) * SECONDS_TO_MILLISECONDS; // default 15 seconds in milliseconds
 
 @Command({
   name: 'job:scan_events',

@@ -41,3 +41,17 @@ export function chunkArrayReturnHex(from: number, to: number, chunkSize = 100) {
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+export function maskApiKey(url: string): string {
+  const lastSlashIndex = url.lastIndexOf('/');
+  if (lastSlashIndex === -1) return url;
+
+  const base = url.substring(0, lastSlashIndex + 1);
+  const apiKey = url.substring(lastSlashIndex + 1);
+
+  if (apiKey.length >= 12) {
+    return base + apiKey.slice(0, 6) + '...' + apiKey.slice(-6);
+  }
+
+  return url;
+}
