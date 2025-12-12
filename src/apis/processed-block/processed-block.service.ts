@@ -551,13 +551,7 @@ export class ProcessedBlockService {
     topics: string[],
     chainId: number,
   ) {
-    if (chainId === 137) {
-      console.info(`${new Date()} [Chain ${chainId}] Using eth_getBlockReceipts method for blocks ${fromBlock}-${toBlock}`);
-      return await this._scanEventByTopicsViaBlockReceipts(client, fromBlock, toBlock, topics, chainId);
-    } else {
-      console.info(`${new Date()} [Chain ${chainId}] Using eth_getPastLogs method for blocks ${fromBlock}-${toBlock}`);
-      return await this._scanEventByTopicsViaPastLogs(client, fromBlock, toBlock, topics);
-    }
+    return await this._scanEventByTopicsViaBlockReceipts(client, fromBlock, toBlock, topics, chainId);
   }
 
   /**
