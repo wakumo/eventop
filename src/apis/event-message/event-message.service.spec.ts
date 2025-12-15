@@ -78,7 +78,7 @@ describe('EventMessageService', () => {
     // expect rabbitmq message request was called with correct routing key and body
     // and returned with true (other service has received and accepted message)
     expect(eventMqRequest).toHaveBeenCalledWith(
-      "eventop-event-mq",
+      "eventop_exchange",
       "eventop.events.ctn.campaign.created",
       {
         id: eventMessage.id,

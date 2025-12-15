@@ -256,8 +256,12 @@ export class ProcessedBlockService {
     await queryRunner.connect();
     console.info(`${new Date()} - starting transaction`);
 
+    let started = false;
+
     try {
       await queryRunner.startTransaction();
+      started = true;
+
       console.info(`${new Date()} - processing coin transfer events and contract events in parallel`);
       const [coinTransferMessages, contractEventMessages] = await Promise.all([
         this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap),
@@ -277,7 +281,9 @@ export class ProcessedBlockService {
       await queryRunner.commitTransaction();
     } catch (error) {
       console.error(`${new Date()} - Error while scanning block: ${error}`);
-      await queryRunner.rollbackTransaction();
+      if (started) {
+        await queryRunner.rollbackTransaction();
+      }
       throw error; // Rethrow the error to stop further processing
     } finally {
       await queryRunner.release();
