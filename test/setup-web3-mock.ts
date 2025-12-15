@@ -43,6 +43,9 @@ jest.mock('web3', () => ({
   },
 }));
 
+// Create a mock ethGetBlockReceipts function that can be imported
+const _mockEthGetBlockReceipts = jest.fn();
+
 // Mock blockchain utils
 jest.mock('../src/commons/utils/blockchain.js', () => ({
   getTopicFromEvent: (event: string) => {
@@ -59,7 +62,7 @@ jest.mock('../src/commons/utils/blockchain.js', () => ({
     return keccak256(JSON.stringify(inputs));
   },
   initClient: jest.fn(() => new MockWeb3()),
-  ethGetBlockReceipts: jest.fn(),
+  ethGetBlockReceipts: _mockEthGetBlockReceipts,
 }));
 
 // Setup default implementation for decodeLog
@@ -67,4 +70,4 @@ _fnDecodeLog.mockImplementation((inputs, data, topics) => {
   return { decoded: true, data, topics };
 });
 
-export { _fnGetBlockNumber, _fnGetPastLogs, _fnGetBlock };
+export { _fnGetBlockNumber, _fnGetPastLogs, _fnGetBlock, _mockEthGetBlockReceipts };

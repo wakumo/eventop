@@ -106,7 +106,12 @@ export class EventMessageService {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
 
+    let started = false;
+
     try {
+      await queryRunner.startTransaction();
+      started = true;
+
       console.log(`${new Date()}Starting send ${pendingMessages.length} pending messages`);
       for (const message of pendingMessages) {
 
@@ -141,11 +146,16 @@ export class EventMessageService {
       }
       await this._markMessagesAsDelivered(queryRunner, pendingMessages);
 
+      await queryRunner.commitTransaction();
+
       console.log(`${new Date()}Finished send pending messages`);
     } catch (ex) {
       console.log("An error happened while trying to send RabbitMQ messages");
       console.log(ex);
-      await queryRunner.rollbackTransaction();
+      if (started) {
+        await queryRunner.rollbackTransaction();
+      }
+      throw ex;
     } finally {
       await queryRunner.release();
     }

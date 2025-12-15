@@ -41,9 +41,13 @@ export class EventsService {
     const queryRunner = this.connection.createQueryRunner();
 
     await queryRunner.connect();
-    await queryRunner.startTransaction();
+
+    let started = false;
 
     try {
+      await queryRunner.startTransaction();
+      started = true;
+
       const eventTopic = getTopicFromEvent(createEventDto.name);
       const inputsHash = getABIInputsHash(createEventDto.abi);
 
@@ -64,7 +68,9 @@ export class EventsService {
       return event;
     } catch (error) {
       console.error(`Failed to register event: ${error.message}`, error);
-      await queryRunner.rollbackTransaction();
+      if (started) {
+        await queryRunner.rollbackTransaction();
+      }
       throw error;
     } finally {
       await queryRunner.release();

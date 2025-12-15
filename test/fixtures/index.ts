@@ -293,3 +293,52 @@ export const traceBlock_97_400000 = {
     }
   ]
 }
+
+// Sample EthGetBlockReceipts response - based on getPastLogsResponse structure
+export function getBlockReceiptsResponse(blockNo: number) {
+  return {
+    jsonrpc: "2.0",
+    id: blockNo,
+    result: [
+      {
+        blockHash: '0xc37734c7e825bb2821eb4e21004d9a2d4e2dbd5f72fc72682ac7b9a9083db471',
+        blockNumber: `0x${blockNo.toString(16)}`,
+        contractAddress: null,
+        cumulativeGasUsed: '0x1a2b3c',
+        effectiveGasPrice: '0x3b9aca00',
+        from: '0x3a0430580303f4de9c5320ac013f14cd92192bfa',
+        gasUsed: '0x5208',
+        logs: [
+          {
+            address: '0xE8bc3596533c3Fc908B43e1F1dE33Cc116AaEd13',
+            topics: [
+              '0xb1d95b6bdf2983a43c17347eaf5685995f289d9fe589d492d89c1fa6f26f35f1'
+            ],
+            data: '0x0000000000000000000000003a0430580303f4de9c5320ac013f14cd92192bfa0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000c6f96f50dae2867de4d4e6654f6fb5ae9228f2db000000000000000000000000ed76b09b6e751573a82031e59e10e6a01a34969c000000000000000000000000000000000000000000000000000000000000000c436f6d6d756e6974792023300000000000000000000000000000000000000000',
+            blockNumber: `0x${blockNo.toString(16)}`,
+            transactionHash: '0x9f74eba0c685f6d3f2d371ba9462e35a78df36e1b2b33b9b66b4bd61cab23559',
+            transactionIndex: '0x8',
+            blockHash: '0xc37734c7e825bb2821eb4e21004d9a2d4e2dbd5f72fc72682ac7b9a9083db471',
+            logIndex: '0x14',
+            removed: false,
+          }
+        ],
+        logsBloom: '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+        status: '0x1',
+        to: '0xE8bc3596533c3Fc908B43e1F1dE33Cc116AaEd13',
+        transactionHash: '0x9f74eba0c685f6d3f2d371ba9462e35a78df36e1b2b33b9b66b4bd61cab23559',
+        transactionIndex: '0x8',
+        type: '0x0',
+      }
+    ]
+  };
+}
+
+// Empty block receipts response
+export function getEmptyBlockReceiptsResponse(blockNo: number) {
+  return {
+    jsonrpc: "2.0",
+    id: blockNo,
+    result: []
+  };
+}

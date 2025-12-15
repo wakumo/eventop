@@ -72,15 +72,21 @@ export class NetworkSeed extends CommandRunner {
     const connection = await initializeConnection();
     const queryRunner = connection.createQueryRunner();
     await queryRunner.connect();
-    await queryRunner.startTransaction();
+
+    let started = false;
 
     try {
+      await queryRunner.startTransaction();
+      started = true;
+
       for (const networkBody of networks) {
         await createNetwork(queryRunner, networkBody);
       }
       await queryRunner.commitTransaction();
     } catch (ex) {
-      await queryRunner.rollbackTransaction();
+      if (started) {
+        await queryRunner.rollbackTransaction();
+      }
       console.log(ex);
       throw ex;
     } finally {

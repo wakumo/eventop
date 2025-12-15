@@ -2,6 +2,8 @@ import { when } from 'jest-when';
 import {
   pastLogs24639421_24639470,
   getPastLogsResponse,
+  getBlockReceiptsResponse,
+  getEmptyBlockReceiptsResponse,
 } from '../../../test/fixtures/index.js';
 import { chunkArrayReturnHex } from '../../commons/utils/index.js';
 
@@ -10,6 +12,7 @@ import {
   _fnGetBlockNumber as fnGetBlockNumber,
   _fnGetPastLogs as fnGetPastLogs,
   _fnGetBlock as fnGetBlock,
+  _mockEthGetBlockReceipts as mockEthGetBlockReceipts,
 } from '../../../test/setup-web3-mock.js';
 
 export { fnGetBlockNumber, fnGetBlock };
@@ -71,6 +74,24 @@ when(fnGetPastLogs)
 const whenAny = when(arg => true)
 when(fnGetBlock).calledWith(expect.any(Number), whenAny).mockImplementation((blockNo) => {
   return { number: blockNo, timestamp: 1703134791 }
+});
+
+// Mock ethGetBlockReceipts to return proper response
+mockEthGetBlockReceipts.mockImplementation(async (client: any, blockNo: number) => {
+  // Return sample receipt with log for EVEN blocks only in the range 24639371-24639470
+  // This simulates ~50 blocks having events (similar to chunk-based getPastLogs behavior)
+  // Range: 24639371 to 24639470 = 100 blocks, every 2nd block = 50 events
+  if (blockNo >= 24639371 && blockNo <= 24639470 && blockNo % 2 === 1) {
+    return getBlockReceiptsResponse(blockNo);
+  }
+
+  // Block 400000 has coin transfers but no contract events in receipts
+  if (blockNo === 400000) {
+    return getEmptyBlockReceiptsResponse(blockNo);
+  }
+
+  // Default: return empty receipts (including block 24639471)
+  return getEmptyBlockReceiptsResponse(blockNo);
 });
 
 export function _getTraceBlockRequestPayload(blockNumber?: number) {
