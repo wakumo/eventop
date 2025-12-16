@@ -17,6 +17,7 @@ import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 import { RetryManager } from '../../commons/utils/retry-manager.js';
 import {
   BLOCKS_RECOVER_ORPHAN,
+  COIN_TRANSFER_EVENT,
   PROCESS_TIMEOUT_IN_MS,
   SECONDS_TO_MILLISECONDS
 } from '../../config/constants.js';
@@ -121,6 +122,7 @@ export class ProcessedBlockService {
     scanOptions: ScanOption,
     topics: string[],
     scanRangeNo: number,
+    isScanCoinTransfers: boolean = true,
   ) {
     const registedEvents = await this.cacheManager.findOrCache(
       this.eventService.getEventsByChain.bind(null, scanOptions.chain_id),
@@ -139,6 +141,7 @@ export class ProcessedBlockService {
           topics,
           registedEvents,
           isRescan,
+          isScanCoinTransfers,
         );
         await await sleep(0.1 * SECONDS_TO_MILLISECONDS);
       }
@@ -169,7 +172,13 @@ export class ProcessedBlockService {
         return { longSleep: false };
       };
 
-      const scanResult = await this._scanBlockEvents(network.http_url, scanOptions, topics, network.scan_range_no);
+      const scanResult = await this._scanBlockEvents(
+        network.http_url,
+        scanOptions,
+        topics,
+        network.scan_range_no,
+        network.is_scan_coin_transfers
+      );
 
       return scanResult;
     } catch (error) {
@@ -233,6 +242,7 @@ export class ProcessedBlockService {
    * @param {number[]} blockRange - The range of blocks to process.
    * @param {string[]} topics - The topics to filter events.
    * @param {EventEntity[]} registedEvents - The registered events for the chain.
+   * @param {boolean} isScanCoinTransfers - Whether to scan coin transfer events.
    */
   private async _processBlockRange(
     chainId: number,
@@ -241,6 +251,7 @@ export class ProcessedBlockService {
     topics: string[] = [],
     registedEvents: EventEntity[],
     isRescan: boolean = false,
+    isScanCoinTransfers: boolean = true,
   ) {
     console.info(
       `${new Date()} [ChainId: ${chainId}] Scanning event from block ${blockRange[0]} to block ${blockRange[1]}`
@@ -263,12 +274,20 @@ export class ProcessedBlockService {
       started = true;
 
       console.info(`${new Date()} - processing coin transfer events and contract events in parallel`);
-      const [coinTransferMessages, contractEventMessages] = await Promise.all([
-        this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap),
-        this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap)
-      ]);
+      const contractEventMessagesPromise = this._processContractEvents(nodeUrl, blockRange, topics, registedEvents, chainId, blockDataMap);
+
+      let messages: EventMessageEntity[];
+      if (isScanCoinTransfers) {
+        const [coinTransferMessages, contractEventMessages] = await Promise.all([
+          this._processCoinTransferEvents(nodeUrl, blockRange, chainId, blockDataMap),
+          contractEventMessagesPromise
+        ]);
+        messages = [...contractEventMessages, ...coinTransferMessages];
+      } else {
+        const contractEventMessages = await contractEventMessagesPromise;
+        messages = contractEventMessages;
+      }
       console.info(`${new Date()} - saving event messages`);
-      const messages = [...contractEventMessages, ...coinTransferMessages];
       if (messages.length !== 0) {
         await queryRunner.manager.save(messages, { chunk: 200 });
         console.info(`Saved ${messages.length} event messages`)
@@ -295,8 +314,8 @@ export class ProcessedBlockService {
     const jsonRpcClient = new JsonRpcClient(nodeUrl);
     const traceBlocks = [];
     for (let blockNo = fromBlock; blockNo <= toBlock; blockNo++) {
-      const traceBlock = jsonRpcClient.getTraceBlock(blockNo);
-      traceBlocks.push(traceBlock);
+      const traceBlockPromise = withTimeout(jsonRpcClient.getTraceBlock(blockNo), 10_000);
+      traceBlocks.push(traceBlockPromise);
     }
 
     return await Promise.all(traceBlocks);
@@ -372,6 +391,12 @@ export class ProcessedBlockService {
     chainId: number,
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
   ) {
+    const coinTransferEvents = await EventEntity.find({ where: { name: COIN_TRANSFER_EVENT, chain_id: chainId } });
+    if (!coinTransferEvents.length) {
+      console.info(`${new Date()} - Skipping coin transfer events for chain ${chainId} because no coin transfer events found`);
+      return [];
+    }
+
     const traceBlocks = await this._getTraceBlocks(nodeUrl, blockRange[0], blockRange[1]);
 
     const coinTransfers: BlockCoinTransfer[] = [];
@@ -382,7 +407,7 @@ export class ProcessedBlockService {
     }
     if (coinTransfers.length === 0) { return []; }
 
-    return await this.eventMsgService.createCoinTransferEventMessage(chainId, coinTransfers, blockDataMap);
+    return await this.eventMsgService.createCoinTransferEventMessage(chainId, coinTransfers, blockDataMap, coinTransferEvents);
   }
 
   private _findCoinTransferAddresses(traceBlock: any): BlockCoinTransfer[] {
@@ -515,7 +540,7 @@ export class ProcessedBlockService {
   ): Promise<{ [blockNo: number]: BlockTransactionData }> {
     const blockDataMap: { [blockNo: number]: BlockTransactionData } = {};
     const fetchBlockData = async (blockNo: number): Promise<void> => {
-      const blockInfo = await withTimeout(this._getBlock(nodeUrl, blockNo), 10000); // 10-second timeout
+      const blockInfo = await withTimeout(this._getBlock(nodeUrl, blockNo), 10000);
       blockDataMap[blockNo] = {
         number: BigInt(blockInfo.number),
         timestamp: BigInt(blockInfo.timestamp),
