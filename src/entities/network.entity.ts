@@ -43,6 +43,9 @@ export class NetworkEntity extends BaseEntity {
   @Column({ default: false })
   is_stop_scan: boolean;
 
+  @Column({ default: true })
+  is_scan_coin_transfers: boolean;
+
   @Column({ default: 50, type: 'smallint' })
   scan_range_no: number;
 
