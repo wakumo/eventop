@@ -17,6 +17,7 @@ import { JsonRpcClient } from '../../commons/utils/json-rpc-client.js';
 import { RetryManager } from '../../commons/utils/retry-manager.js';
 import {
   BLOCKS_RECOVER_ORPHAN,
+  COIN_TRANSFER_EVENT,
   PROCESS_TIMEOUT_IN_MS,
   SECONDS_TO_MILLISECONDS
 } from '../../config/constants.js';
@@ -390,6 +391,12 @@ export class ProcessedBlockService {
     chainId: number,
     blockDataMap: { [blockNo: number]: BlockTransactionData; }
   ) {
+    const coinTransferEvents = await EventEntity.find({ where: { name: COIN_TRANSFER_EVENT, chain_id: chainId } });
+    if (!coinTransferEvents.length) {
+      console.info(`${new Date()} - Skipping coin transfer events for chain ${chainId} because no coin transfer events found`);
+      return [];
+    }
+
     const traceBlocks = await this._getTraceBlocks(nodeUrl, blockRange[0], blockRange[1]);
 
     const coinTransfers: BlockCoinTransfer[] = [];
@@ -400,7 +407,7 @@ export class ProcessedBlockService {
     }
     if (coinTransfers.length === 0) { return []; }
 
-    return await this.eventMsgService.createCoinTransferEventMessage(chainId, coinTransfers, blockDataMap);
+    return await this.eventMsgService.createCoinTransferEventMessage(chainId, coinTransfers, blockDataMap, coinTransferEvents);
   }
 
   private _findCoinTransferAddresses(traceBlock: any): BlockCoinTransfer[] {

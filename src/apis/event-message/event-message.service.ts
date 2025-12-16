@@ -64,15 +64,10 @@ export class EventMessageService {
   async createCoinTransferEventMessage(
     chainId: number,
     coinTransfers: BlockCoinTransfer[],
-    blockDataMap: { [blockNo: number]: BlockTransactionData; }
+    blockDataMap: { [blockNo: number]: BlockTransactionData; },
+    coinTransferEvents: EventEntity[]
   ) {
     if (!coinTransfers.length) return [];
-
-    // Find all coin transfer events for the given chainId
-    const coinTransferEvents = await EventEntity.find({ where: { name: COIN_TRANSFER_EVENT, chain_id: chainId } });
-    if (!coinTransferEvents.length) {
-      throw new Error('Coin transfer events not found');
-    }
 
     let messages: EventMessageEntity[] = [];
     for (const event of coinTransferEvents) {
