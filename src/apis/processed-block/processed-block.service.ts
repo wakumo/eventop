@@ -59,7 +59,7 @@ export class ProcessedBlockService {
     private networkService: NetworkService,
     private readonly cacheManager: CacheManagerService,
   ) {
-    this.retryManager = new RetryManager({});
+    this.retryManager = new RetryManager({ retrySchedule: [100, 500, 2000] });
   }
 
   /**
@@ -182,8 +182,10 @@ export class ProcessedBlockService {
 
       return scanResult;
     } catch (error) {
-      console.log(`${new Date()} - Error while scanning block: ${error}`);
-      return { longSleep: true };
+      this.logger.error(
+        `Error scanning block events [Chain: ${scanOptions.chain_id}]: ${error?.message || error}`
+      );
+      return { longSleep: true, error };
     }
   }
 
@@ -208,15 +210,17 @@ export class ProcessedBlockService {
 
     if (network.is_stop_scan) { return network; }
 
-    // Determine if switching to another node is necessary
-    const isShouldSwitchNode = await this._shouldSwitchNode(latestScanResult, chainId);
+    // Only check and switch node if there are multiple nodes available
+    if (network.node_urls.length > 1) {
+      const isShouldSwitchNode = await this._shouldSwitchNode(latestScanResult, chainId);
 
-    if (isShouldSwitchNode) {
-      console.info(`${new Date()} - Switching to another node for network ${network.chain_id}`);
-      // Only exclude current node if we have multiple nodes AND it's not a longSleep retry
-      const shouldExcludeCurrent = !latestScanResult?.longSleep && network.node_urls.length > 1;
-      const nodesToExclude = shouldExcludeCurrent ? [network.http_url] : [];
-      network = await withTimeout(this.networkService.pickAndUpdateAvailableNode(network, nodesToExclude), 10_000);
+      if (isShouldSwitchNode) {
+        console.info(`${new Date()} - Switching to another node for network ${network.chain_id}`);
+        // Only exclude current node if we have multiple nodes AND it's not a longSleep retry
+        const shouldExcludeCurrent = !latestScanResult?.longSleep && network.node_urls.length > 1;
+        const nodesToExclude = shouldExcludeCurrent ? [network.http_url] : [];
+        network = await withTimeout(this.networkService.pickAndUpdateAvailableNode(network, nodesToExclude), 10_000);
+      }
     }
 
     return network;
@@ -539,8 +543,11 @@ export class ProcessedBlockService {
     toBlock: number
   ): Promise<{ [blockNo: number]: BlockTransactionData }> {
     const blockDataMap: { [blockNo: number]: BlockTransactionData } = {};
+
     const fetchBlockData = async (blockNo: number): Promise<void> => {
-      const blockInfo = await withTimeout(this._getBlock(nodeUrl, blockNo), 10000);
+      const blockInfo = await this.retryManager.call(
+        withTimeout(this._getBlock(nodeUrl, blockNo), 3000)
+      );
       blockDataMap[blockNo] = {
         number: BigInt(blockInfo.number),
         timestamp: BigInt(blockInfo.timestamp),
