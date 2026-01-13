@@ -27,18 +27,10 @@ export class RetryManager {
     } catch (ex) {
       console.error(ex);
       if (retries >= this.retrySchedule.length) {
-        throw new Web3RateLimitExceededException();
-      }
-      if (isRateLimitError(ex)) {
-        await sleep(this.retrySchedule[retries]);
-        return this.call(promiseFunc, retries+1);
-      } else {
         throw ex;
       }
+      await sleep(this.retrySchedule[retries]);
+      return this.call(promiseFunc, retries+1);
     }
   }
-}
-
-function isRateLimitError(err: any): boolean {
-  return err && /rate limit/i.test(err?.message);
 }
