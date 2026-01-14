@@ -37,7 +37,7 @@
     "db:migrate:up": "yarn typeorm -d ./src/config/typeorm.config.ts migration:run",
     "db:migrate:up:prod": "yarn typeorm:prod -d dist/src/config/typeorm.config.js migration:run",
     "migrate_and_start": "yarn run ts-node-esm create_db.ts; yarn db:migrate:up; yarn start",
-    "migrate_and_start_prod": "node dist/create_db.js; yarn db:migrate:up; yarn start:prod",
+    "migrate_and_start_prod": "node dist/create_db.js; yarn db:migrate:up:prod; yarn start:prod",
     "db:migrate:down": "yarn typeorm -d ./src/config/typeorm.config.ts migration:revert",
     "db:create": "yarn ts-node-esm create_db.ts",
     "db:create:test": "NODE_ENV=test yarn db:create",
