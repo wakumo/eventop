@@ -84,6 +84,7 @@ describe('ProcessedBlockService', () => {
 
     expect(messages.length).toEqual(50);
     expect(processedBlock.block_no).toEqual(24639471);
+    expect(processedBlock.current_block_no).toEqual(24639471);
   });
 
   describe('Orphan block', () => {
@@ -110,6 +111,7 @@ describe('ProcessedBlockService', () => {
 
       expect(messages.length).toEqual(0);
       expect(processedBlock.block_no).toEqual(24639370 - 128);
+      expect(processedBlock.current_block_no).toEqual(24639471);
     });
   });
 
@@ -149,8 +151,10 @@ describe('ProcessedBlockService', () => {
     it('should create 2 messages', async () => {
       await service.scanBlockEvents({ chain_id: 97 });
       const messages = await EventMessageEntity.find();
+      const processedBlock = await ProcessedBlockEntity.findOne({ where: { chain_id: 97 } });
 
       expect(messages.length).toEqual(2);
+      expect(processedBlock.current_block_no).toEqual(400000);
       expect(messages.find((m) => m.tx_id === '0x2c6bad278d82dd3600b960bd07f9052f4f24bb26cbac84bf85ba38a093f37d36')).toEqual(expect.objectContaining({
         block_no: "400000",
         payload: "{\"block_number\":400000,\"addresses\":[\"0xf5e8a439c599205c1ab06b535de46681aed1007a\",\"0xc0eb57bf242f8dd78a1aaa0684b15fada79b6f85\"],\"txid\":\"0x2c6bad278d82dd3600b960bd07f9052f4f24bb26cbac84bf85ba38a093f37d36\"}",
@@ -214,8 +218,10 @@ describe('ProcessedBlockService', () => {
 
       await service.scanBlockEvents({ chain_id: 97 });
       const messages = await EventMessageEntity.find();
+      const processedBlock = await ProcessedBlockEntity.findOne({ where: { chain_id: 97 } });
 
       expect(messages.length).toEqual(2);
+      expect(processedBlock.current_block_no).toEqual(400000);
     });
 
     it('should not call trace_block RPC when is_scan_coin_transfers is false', async () => {
