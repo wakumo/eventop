@@ -1,12 +1,19 @@
+import 'dotenv/config';
+
+import fs from 'node:fs';
 import { DataSource } from 'typeorm';
-import { config } from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const isEntitiesBuilt = fs.existsSync('./dist/src/entities');
+const isMigrationsBuilt = fs.existsSync('./dist/src/migrations');
 
-config();
+const entitiesPath = isEntitiesBuilt
+  ? 'dist/src/entities/**/*.entity.js'
+  : 'src/entities/**/*.entity.ts';
+
+const migrationsPath = isMigrationsBuilt
+  ? 'dist/src/migrations/*.js'
+  : 'src/migrations/*.ts';
+
 export default new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST,
@@ -14,6 +21,8 @@ export default new DataSource({
   database: process.env.DB_NAME,
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  entities: [path.join(__dirname, '../**/*.entity{.ts,.js}')],
-  migrations: ['src/migrations/*.ts'],
+  synchronize: false,
+  logging: true,
+  entities: [entitiesPath],
+  migrations: [migrationsPath],
 });
