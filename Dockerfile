@@ -1,24 +1,32 @@
-FROM node:18.14.2
+FROM node:18.14.2 AS build
 
-ENV APP_ROOT /app
+WORKDIR /usr/src/app
 
-# Create server directory
-WORKDIR $APP_ROOT
+COPY --chown=node:node package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
-
-# Install server dependencies
-# COPY package.json .
-# For npm@5 or later, copy package-lock.json as well
-COPY package.json yarn.lock ./
-
-# Install curl and jq for easier debug
-# RUN apt-get update -y && apt-get upgrade -y
-RUN yarn install
-# Bundle server source
-COPY . $APP_ROOT
-
+COPY --chown=node:node . .
 RUN yarn build
 
-EXPOSE 3000 3001
 
-CMD [ "yarn", "run", "migrate_and_start_prod"]
+FROM node:18.14.2-alpine AS production
+
+ENV NODE_ENV=production
+
+WORKDIR /usr/src/app
+RUN mkdir -p /usr/src/app && chown -R node:node /usr/src/app
+
+COPY --chown=node:node package.json yarn.lock ./
+COPY --from=build /usr/src/app/dist ./dist
+COPY --chown=node:node entrypoint.sh ./entrypoint.sh
+
+RUN yarn install --frozen-lockfile --production \
+  && yarn cache clean \
+  && chmod +x entrypoint.sh
+
+USER node
+
+EXPOSE 3000
+
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["node", "dist/src/main.js"]
