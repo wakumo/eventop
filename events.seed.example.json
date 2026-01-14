@@ -1,0 +1,113 @@
+[
+  {
+    "service_name": "my_service",
+    "name": "Transfer(address,address,uint256)",
+    "routing_key": "my_app.events.my_service.token_transfer",
+    "abi": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    "chain_ids": [1, 56, 137],
+    "contract_addresses": ["0x1234567890123456789012345678901234567890"]
+  },
+  {
+    "service_name": "my_service",
+    "name": "OrderCreated(bytes32,address,uint256,uint256)",
+    "routing_key": "my_app.events.my_service.order_created",
+    "abi": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "creator",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "createdAt",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrderCreated",
+      "type": "event"
+    },
+    "chain_ids": [97],
+    "contract_addresses": [
+      "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+      "0x9876543210987654321098765432109876543210"
+    ]
+  },
+  {
+    "service_name": "wallet_service",
+    "name": "coin_transfer",
+    "routing_key": "my_app.events.wallet.native_coin_transfer",
+    "chain_ids": [1, 56, 137]
+  },
+  {
+    "service_name": "defi_service",
+    "name": "Deposit(address,uint256,uint256)",
+    "routing_key": "my_app.events.defi.deposit",
+    "abi": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "Deposit",
+      "type": "event"
+    },
+    "chain_ids": [56],
+    "contract_addresses": ["0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"]
+  }
+]

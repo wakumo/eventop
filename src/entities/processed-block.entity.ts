@@ -31,6 +31,9 @@ export class ProcessedBlockEntity extends BaseEntity {
   @Column({ nullable: true })
   block_hash: string;
 
+  @Column({ nullable: true })
+  current_block_no: number;
+
   @OneToOne(() => NetworkEntity, (network) => network.chain_id)
   @JoinColumn({ name: 'chain_id', referencedColumnName: 'chain_id', foreignKeyConstraintName: 'fk_networks_processed_blocks' })
   network: Relation<NetworkEntity>;

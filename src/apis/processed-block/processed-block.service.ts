@@ -108,6 +108,11 @@ export class ProcessedBlockService {
     const rpcClient = new JsonRpcClient(nodeUrl);
     const currentBlockNo = await rpcClient.getCurrentBlock();
 
+    // Update current_block_no for monitoring delay
+    if (latestProcessedBlock && currentBlockNo && currentBlockNo > latestProcessedBlock.block_no) {
+      await ProcessedBlockEntity.update(latestProcessedBlock.id, { current_block_no: currentBlockNo });
+    }
+
     // Calculate the starting block number based on the next block or current block
     let fromBlock = nextBlockNo || currentBlockNo;
     // Calculate the ending block number, limiting the range to 500 blocks
