@@ -62,10 +62,13 @@ EventOp is a high-performance blockchain event monitoring and distribution syste
           │                                     │
           │         RabbitMQ (EventMQ)          │
           │                                     │
-          │  Exchange: event.topic (topic)      │
+          │  Exchange: configurable (topic)     │
           │  Routing Key Format:                │
-          │    event.{chainId}.{eventName}      │
-          │    event.{chainId}.coin_transfer    │
+          │    {app}.events.{service}.{event}   │
+          │                                     │
+          │  Example routing keys:              │
+          │    my_app.events.wallet.transfer    │
+          │    my_app.events.wallet.coin_xfer   │
           │                                     │
           └──────────┬──────────┬───────────────┘
                      │          │
@@ -75,8 +78,8 @@ EventOp is a high-performance blockchain event monitoring and distribution syste
           ┃      A       ┃    ┃      B        ┃
           ┃              ┃    ┃               ┃
           ┃ Subscribe:   ┃    ┃ Subscribe:    ┃
-          ┃ event.97.*   ┃    ┃ event.*.      ┃
-          ┃              ┃    ┃ Transfer      ┃
+          ┃ *.wallet.*   ┃    ┃ *.*.transfer  ┃
+          ┃              ┃    ┃               ┃
           ┗━━━━━━━━━━━━━━┛    ┗━━━━━━━━━━━━━━━┛
 ```
 
@@ -107,15 +110,25 @@ EventOp is a high-performance blockchain event monitoring and distribution syste
 
 #### Step 1: Register Events in EventOp
 
-Add your events to monitor in `src/scripts/seeds/events/events.ts`:
+Add your events to the configuration file (default: `events.seed.json` or use `EVENTS_FILE_PATH` env var):
 
-```typescript
+```json
 {
-  name: 'Transfer',
-  contract_address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-  network_id: 97, // BSC Testnet
-  event_signature: 'Transfer(address,address,uint256)',
-  abi: [...] // Event ABI
+  "service_name": "my_service",
+  "name": "Transfer(address,address,uint256)",
+  "routing_key": "my_app.events.my_service.token_transfer",
+  "abi": {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "name": "from", "type": "address"},
+      {"indexed": true, "name": "to", "type": "address"},
+      {"indexed": false, "name": "value", "type": "uint256"}
+    ],
+    "name": "Transfer",
+    "type": "event"
+  },
+  "chain_ids": [97],
+  "contract_addresses": ["0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"]
 }
 ```
 
@@ -130,10 +143,12 @@ yarn execute job:scan_events -c 97
 Connect your microservice to RabbitMQ and subscribe to relevant routing keys:
 
 **Routing Key Patterns:**
-- `event.{chainId}.{eventName}` - Specific event on specific chain
-- `event.97.Transfer` - Transfer events on BSC Testnet (chainId 97)
-- `event.*.coin_transfer` - Coin transfers on all chains
-- `event.1.*` - All events on Ethereum Mainnet (chainId 1)
+
+Routing keys are fully customizable in the events configuration file. Common patterns:
+- `{app}.events.{service}.{event_type}` - Your custom format
+- `my_app.events.my_service.token_transfer` - Specific event
+- `my_app.events.wallet.*` - All wallet service events
+- `*.events.*.coin_transfer` - Coin transfers from all services
 
 **Example (NestJS):**
 
@@ -142,8 +157,8 @@ import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 
 export class EventConsumerService {
   @RabbitSubscribe({
-    exchange: 'event.topic',
-    routingKey: 'event.97.Transfer',
+    exchange: 'your_exchange_name', // Use your configured exchange
+    routingKey: 'my_app.events.my_service.token_transfer',
     queue: 'my-service-transfer-queue',
   })
   async handleTransferEvent(message: EventMessage) {
@@ -152,8 +167,8 @@ export class EventConsumerService {
   }
 
   @RabbitSubscribe({
-    exchange: 'event.topic',
-    routingKey: 'event.*.coin_transfer',
+    exchange: 'your_exchange_name',
+    routingKey: 'my_app.events.wallet.native_coin_transfer',
     queue: 'my-service-coin-queue',
   })
   async handleCoinTransfer(message: EventMessage) {
@@ -169,34 +184,43 @@ export class EventConsumerService {
 
 ```typescript
 interface EventMessage {
-  id: string;                    // Unique message ID
-  event_id: string;              // Event configuration ID
-  network_id: number;            // Chain ID (e.g., 97 for BSC Testnet)
-  block_number: number;          // Block number where event occurred
-  transaction_hash: string;      // Transaction hash
-  log_index: number;             // Log index in the transaction
-  event_name: string;            // Event name (e.g., 'Transfer')
-  contract_address: string;      // Contract address that emitted the event
-  event_data: {                  // Parsed event parameters
-    from: string;
-    to: string;
-    value: string;
-    // ... other event-specific fields
-  };
-  raw_log: {                     // Raw blockchain log data
-    address: string;
-    topics: string[];
-    data: string;
-    blockNumber: number;
-    transactionHash: string;
-    transactionIndex: number;
-    blockHash: string;
-    logIndex: number;
-    removed: boolean;
-  };
-  status: string;                // Message status (PENDING, SENT, DELIVERED, FAILED)
-  created_at: Date;              // When the event was detected
-  updated_at: Date;              // Last update time
+  id: number;                    // Unique message ID
+  payload: object;               // Parsed event parameters (decoded from blockchain)
+  serviceName: string;           // Service name from event configuration
+  eventName: string;             // Event name/signature (e.g., 'Transfer(address,address,uint256)')
+  eventTopic: string;            // Event topic hash (keccak256 of signature)
+  chainId: number;               // Chain ID (e.g., 97 for BSC Testnet)
+  txId: string;                  // Transaction hash
+  logIndex: number;              // Log index in the transaction
+  blockNo: number;               // Block number where event occurred
+  contractAddress: string;       // Contract address that emitted the event
+  timestamp: string;             // Block timestamp (as bigint string)
+  from: string | null;           // Sender address (for transfers)
+  to: string | null;             // Receiver address (for transfers)
+}
+```
+
+**Example payload for Transfer event:**
+
+```typescript
+{
+  id: 12345,
+  payload: {
+    from: "0x1234...",
+    to: "0x5678...",
+    value: "1000000000000000000"
+  },
+  serviceName: "my_service",
+  eventName: "Transfer(address,address,uint256)",
+  eventTopic: "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+  chainId: 97,
+  txId: "0xabc123...",
+  logIndex: 0,
+  blockNo: 12345678,
+  contractAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  timestamp: "1634567890",
+  from: "0x1234...",
+  to: "0x5678..."
 }
 ```
 
