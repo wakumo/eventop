@@ -28,13 +28,14 @@
     "ts-node": "ts-node -r tsconfig-paths/register -r dotenv/config",
     "ts-node-esm": "ts-node-esm -r dotenv/config -r tsconfig-paths/register",
     "typeorm": "ts-node-esm -r tsconfig-paths/register ./node_modules/.bin/typeorm",
+    "typeorm:prod": "node ./node_modules/.bin/typeorm",
     "execute": "node dist/src/execute_script.js",
     "execute-tsnode": "yarn run ts-node-esm src/execute_script.ts",
     "db:schema:drop": "yarn typeorm schema:drop",
     "db:migrate:generate": "yarn typeorm -d ./src/config/typeorm.config.ts migration:generate",
     "db:migrate:create": "yarn typeorm -d ./src/config/typeorm.config.ts migration:create",
     "db:migrate:up": "yarn typeorm -d ./src/config/typeorm.config.ts migration:run",
-    "db:migrate:up:prod": "yarn typeorm -d dist/src/config/typeorm.config.js migration:run",
+    "db:migrate:up:prod": "yarn typeorm:prod -d dist/src/config/typeorm.config.js migration:run",
     "migrate_and_start": "yarn run ts-node-esm create_db.ts; yarn db:migrate:up; yarn start",
     "migrate_and_start_prod": "node dist/create_db.js; yarn db:migrate:up; yarn start:prod",
     "db:migrate:down": "yarn typeorm -d ./src/config/typeorm.config.ts migration:revert",
@@ -91,7 +92,7 @@
     "@types/jest": "28.1.8",
     "@types/jest-when": "^3.5.2",
     "@types/multer": "^1.4.7",
-    "@types/node": "^16.0.0",
+    "@types/node": "^18",
     "@types/pg": "^8.6.5",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
@@ -134,7 +135,9 @@
       "^src/(.*)$": "<rootDir>/$1",
       "^@/test/(.*)$": "<rootDir>/../test/$1"
     },
-    "setupFilesAfterEnv": ["<rootDir>/test/setup-web3-mock.ts"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/setup-web3-mock.ts"
+    ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
