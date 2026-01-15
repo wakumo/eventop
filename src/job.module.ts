@@ -17,6 +17,7 @@ import { ProcessedBlockModule } from './apis/processed-block/processed-block.mod
 import { EventMessageModule } from "./apis/event-message/event-message.module.js";
 import { EventMqJobModule } from "./rabbitmq/eventmq-job.module.js";
 import { CacheManagerModule } from './commons/cache-manager/cache-manager.module.js';
+import { NetworkModule } from './apis/network/network.module.js';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { RedisConfigService } from './config/redis.config.js';
 
@@ -45,6 +46,7 @@ import { RedisConfigService } from './config/redis.config.js';
     EventMessageModule,
     EventMqJobModule,
     CacheManagerModule,
+    NetworkModule,
   ],
   controllers: [AppController],
   providers: [AppService, ...SCRIPTS],

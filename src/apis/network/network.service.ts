@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { NetworkEntity } from '../../entities/network.entity.js';
 import { initClient } from '../../commons/utils/blockchain.js';
 import { maskApiKey } from '../../commons/utils/index.js';
@@ -6,6 +6,8 @@ import { NoAvailableNodeException } from '../../commons/exceptions/not_available
 
 @Injectable()
 export class NetworkService {
+  private readonly logger = new Logger(NetworkService.name);
+
   constructor() {}
 
   // @dev: To check if the node is available
@@ -63,5 +65,25 @@ export class NetworkService {
       .orderBy('networks.chain_id', 'DESC')
       .getMany();
     return networks;
+  }
+
+  /**
+   * Updates the is_stop_scan flag for all networks.
+   *
+   * @param shouldStop true to stop scanning, false to enable scanning
+   * @returns The number of affected networks
+   */
+  async updateAllNetworksStopScan(shouldStop: boolean): Promise<number> {
+    const result = await NetworkEntity.createQueryBuilder()
+      .update(NetworkEntity)
+      .set({ is_stop_scan: shouldStop })
+      .execute();
+
+    const affectedCount = result.affected || 0;
+    this.logger.log(
+      `Updated is_stop_scan=${shouldStop} for ${affectedCount} network(s)`
+    );
+
+    return affectedCount;
   }
 }

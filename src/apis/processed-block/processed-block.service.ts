@@ -704,4 +704,21 @@ export class ProcessedBlockService {
 
     return logs;
   }
+
+  /**
+   * Deletes all ProcessedBlockEntity records for all networks.
+   * Used when resuming scans after a scheduled pause to ensure fresh start.
+   *
+   * @returns The number of deleted records
+   */
+  async deleteAllProcessedBlocks(): Promise<number> {
+    const result = await ProcessedBlockEntity.createQueryBuilder()
+      .delete()
+      .execute();
+
+    const deletedCount = result.affected || 0;
+    this.logger.log(`Deleted ${deletedCount} ProcessedBlockEntity record(s)`);
+
+    return deletedCount;
+  }
 }
