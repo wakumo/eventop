@@ -279,6 +279,57 @@ Each event in the JSON array must have:
   - Examples: `12` (12 hours), `48` (2 days), `72` (3 days)
 - When `KEEP_SENT_MESSAGES=1`, run cleanup job periodically: `yarn execute job:delete_delivered_messages`
 
+#### Scan Schedule Control (Development Only)
+
+**`SCAN_SCHEDULE_PATTERN`** - Schedule pattern for automatically enabling/disabling event scanning in development environments
+
+This feature only works when `NODE_ENV !== 'production'`. In production, scanning runs 24/7.
+
+**Format:** `TZ=<timezone>|<day>[<time-range|all|off>],<day>[<time-range|all|off>],...`
+
+**Components:**
+- `TZ=<timezone>` - Timezone offset: `+HH:MM` or `-HH:MM` (e.g., `+07:00` for Vietnam, `-05:00` for US Eastern)
+- `<day>` - Day name: `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, `sun` (case-insensitive)
+- `<time-range>` - `HH:MM-HH:MM` format (24-hour, start-end times)
+- `all` - Keyword to scan all day (equivalent to `00:00-23:59`)
+- `off` - Keyword to disable scanning for that day
+- **Default behavior**: Days not listed in pattern default to scanning all day
+
+**Examples:**
+
+```bash
+# Vietnam business hours (Mon-Fri 8am-6pm, weekends off)
+SCAN_SCHEDULE_PATTERN="TZ=+07:00|mon[08:00-18:00],tue[08:00-18:00],wed[08:00-18:00],thu[08:00-18:00],fri[08:00-18:00],sat[off],sun[off]"
+
+# Different hours per day (Mon/Wed/Fri 8am-6pm, Tue/Thu 9am-5pm, weekends off)
+SCAN_SCHEDULE_PATTERN="TZ=+07:00|mon[08:00-18:00],tue[09:00-17:00],wed[08:00-18:00],thu[09:00-17:00],fri[08:00-18:00],sat[off],sun[off]"
+
+# Only configure specific days (Mon 8am-6pm, Tue off, Wed 9am-5pm - other days scan all day by default)
+SCAN_SCHEDULE_PATTERN="TZ=+07:00|mon[08:00-18:00],tue[off],wed[09:00-17:00]"
+
+# 24/7 scanning (all days enabled - can omit all days or use [all])
+SCAN_SCHEDULE_PATTERN="TZ=+00:00|"
+# or
+SCAN_SCHEDULE_PATTERN="TZ=+00:00|mon[all],tue[all],wed[all],thu[all],fri[all],sat[all],sun[all]"
+
+# US Eastern business hours
+SCAN_SCHEDULE_PATTERN="TZ=-05:00|mon[09:00-17:00],tue[09:00-17:00],wed[09:00-17:00],thu[09:00-17:00],fri[09:00-17:00],sat[off],sun[off]"
+```
+
+**Running the Schedule Control Job:**
+
+```bash
+# Run the schedule control job (one-time execution)
+yarn execute job:schedule_scan_control
+```
+
+**How it works:**
+- Job runs once, checks current time against the schedule pattern, then exits
+- Scheduling frequency is controlled by Kubernetes CronJob (e.g., run every hour)
+- When schedule indicates scan should stop: sets `is_stop_scan = true` for all networks
+- When schedule indicates scan should start: deletes all `ProcessedBlockEntity` records, then sets `is_stop_scan = false`
+- This ensures fresh start from current blockchain state when resuming scans
+
 ### Build & Deploy
 
 ```
