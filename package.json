@@ -1,6 +1,6 @@
 {
   "name": "eventop",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "A high-performance blockchain event monitoring and distribution system that acts as a centralized service for tracking and delivering smart contract events to multiple microservices",
   "author": "Wakumo",
   "private": true,

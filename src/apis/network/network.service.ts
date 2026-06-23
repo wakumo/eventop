@@ -47,8 +47,9 @@ export class NetworkService {
 
     if (availableNodes.length > 0) {
       const randomNodeIndex = Math.floor(Math.random() * availableNodes.length);
-      network.http_url = availableNodes[randomNodeIndex].url;
-      network = await NetworkEntity.save(network);
+      const httpUrl = availableNodes[randomNodeIndex].url;
+      await NetworkEntity.update(network.id, { http_url: httpUrl });
+      network.http_url = httpUrl;
 
       console.info(`${new Date()} - Switched to: ${maskApiKey(network.http_url)} (${availableNodes.length}/${nodeUrls.length} available)`);
 
