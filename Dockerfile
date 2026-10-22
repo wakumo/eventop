@@ -1,4 +1,4 @@
-FROM node:18.14.2 AS build
+FROM node:22.23.4 AS build
 
 WORKDIR /usr/src/app
 
@@ -9,7 +9,7 @@ COPY --chown=node:node . .
 RUN yarn build
 
 
-FROM node:18.14.2-alpine AS production
+FROM node:22.23.4-alpine AS production
 
 ENV NODE_ENV=production
 
